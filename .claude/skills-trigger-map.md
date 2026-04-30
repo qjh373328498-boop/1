@@ -58,7 +58,9 @@
 
 ### data-analysis-workflow
 ```
-- 分析这个数据
+- 帮我分析
+- 分析一下
+- 分析数据
 - 处理 Excel
 - 财务分析
 - 制作图表
@@ -120,6 +122,8 @@
 ### data-analysis-workflow
 ```
 - 帮我分析这个数据
+- 分析一下这个数据
+- 分析一下 Excel
 - 帮我分析这个 Excel
 - 分析这个数据
 - 处理 Excel
