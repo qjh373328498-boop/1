@@ -128,14 +128,31 @@ git push
 
 ## 新增工作流
 
-### 6. 学术研究与论文写作工作流
+### 6. 学术研究与论文写作工作流（双模式）
 
-**触发条件**：
-- 用户需要写论文、研究报告、文献综述
-- 处理 PDF/Word 文档、提取内容、总结文献
-- 翻译外文资料、格式化论文、生成配图
+**⚠️ 重要：双模式设计**
 
-**使用技能**：`research-paper-workflow`
+根据用户是否授权参考知识库，使用不同的工作流：
+
+| 模式 | 触发条件 | 资料来源 | 适用场景 |
+|------|----------|----------|----------|
+| **隔离模式（默认）** | 用户未明确提及知识库 | 仅外部文献 + 用户提供 | 正式论文、学术竞赛 |
+| **知识库模式** | 用户说"参考知识库"、"用知识库的资料"等 | 外部文献 + 知识库 + 用户提供 | 课程作业、学习整理 |
+
+**隔离模式触发条件**：
+- 用户说"写论文"、"写报告"但未提及知识库
+- 默认情况
+
+**使用技能**：`research-paper-workflow-isolated`
+
+**知识库模式触发条件**（必须明确表述）：
+- "可以参考知识库"
+- "用知识库的资料帮我..."
+- "结合我之前的资料..."
+- "参考我之前的学习笔记"
+- "用我比赛的那些资料"
+
+**使用技能**：`research-paper-workflow-with-kb`
 
 **完整流程**：
 ```
@@ -144,20 +161,23 @@ git push
 
 **快捷命令**：
 ```bash
-# 完整流程
-/research-paper-workflow <URL 或文件>
+# 隔离模式（默认）
+/research-paper-workflow-isolated <URL 或文件>
+
+# 知识库模式（需用户明确授权）
+/research-paper-workflow-with-kb <URL 或文件>
 
 # 仅提取
-/research-paper-workflow <URL> --stage extract
+/research-paper-workflow-isolated <URL> --stage extract
 
 # 仅翻译
-/research-paper-workflow <文件> --stage translate --to zh-CN
+/research-paper-workflow-isolated <文件> --stage translate --to zh-CN
 
 # 导出为 Word
-/research-paper-workflow <文件> --export docx
+/research-paper-workflow-isolated <文件> --export docx
 
 # 导出为 PPT
-/research-paper-workflow <文件> --export pptx
+/research-paper-workflow-isolated <文件> --export pptx
 ```
 
 **依赖 Skills**：

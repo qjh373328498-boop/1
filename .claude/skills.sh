@@ -124,22 +124,46 @@ do_clean_empty_dirs() {
     fi
 }
 
-# 命令 6: 触发论文写作工作流
+# 命令 6: 触发论文写作工作流（隔离模式 - 默认）
 do_paper_workflow() {
     local input="$1"
     
     if [ -z "$input" ]; then
         print_warning "Usage: $0 paper <PDF 文件/URL>"
         print_info "示例：$0 paper 知识库/论文.pdf"
+        print_info ""
+        print_info "⚠️ 注意：默认使用隔离模式（不参考知识库）"
+        print_info "如需参考知识库，请使用：$0 paper-kb <主题>"
         exit 1
     fi
     
-    print_info "Starting research paper workflow for: $input"
+    print_info "Starting research paper workflow (ISOLATED mode) for: $input"
+    print_info "⚠️ 隔离模式：不参考本地知识库，确保学术诚信"
     print_info "This will: extract content → translate → format → generate diagrams"
-    print_info "Please use the skill: /research-paper-workflow $input"
+    print_info "Please use the skill: /research-paper-workflow-isolated $input"
 }
 
-# 命令 7: 触发知识管理工作流
+# 命令 7: 触发论文写作工作流（知识库模式 - 需用户明确授权）
+do_paper_workflow_with_kb() {
+    local input="$1"
+    
+    if [ -z "$input" ]; then
+        print_warning "Usage: $0 paper-kb <主题>"
+        print_info "示例：$0 paper-kb 环境会计研究"
+        print_info ""
+        print_info "⚠️ 注意：此模式会参考知识库中的个人资料"
+        print_info "适用于：课程作业、学习整理、比赛报告"
+        print_info "不适用于：正式学术论文（请用 paper 命令）"
+        exit 1
+    fi
+    
+    print_info "Starting research paper workflow (WITH KNOWLEDGE BASE) for: $input"
+    print_info "✅ 知识库模式：可参考个人学习笔记、比赛资料等"
+    print_info "This will: scan knowledge base → extract → translate → format"
+    print_info "Please use the skill: /research-paper-workflow-with-kb $input"
+}
+
+# 命令 8: 触发知识管理工作流
 do_kb_workflow() {
     local input="$1"
     
@@ -153,7 +177,7 @@ do_kb_workflow() {
     print_info "Please use the skill: /knowledge-manage-workflow $input"
 }
 
-# 命令 8: 触发需求设计工作流
+# 命令 9: 触发需求设计工作流
 do_feature_design() {
     local description="$*"
     
@@ -169,38 +193,52 @@ do_feature_design() {
     print_info "Please use the skill: /feature-design \"$description\""
 }
 
-# 命令 9: 显示所有可用工作流
+# 命令 10: 显示所有可用工作流
 do_workflows() {
     echo "Available Workflows:"
     echo "===================="
     echo ""
-    echo "1. 学术研究/论文写作工作流"
+    echo "1. 学术研究/论文写作工作流（隔离模式 - 默认）"
     echo "   命令：$0 paper <PDF/URL>"
-    echo "   技能：/research-paper-workflow"
+    echo "   技能：/research-paper-workflow-isolated"
     echo "   用途：处理 PDF、翻译、格式化、生成配图、导出 Word/PPT"
+    echo "   特点：❌ 不参考知识库，确保学术诚信"
+    echo "   适用：正式论文、学术竞赛"
     echo ""
-    echo "2. 知识管理工作流"
+    echo "2. 学术研究/论文写作工作流（知识库模式）"
+    echo "   命令：$0 paper-kb <主题>"
+    echo "   技能：/research-paper-workflow-with-kb"
+    echo "   用途：同上，但可参考个人资料"
+    echo "   特点：✅ 可参考个人笔记、比赛资料"
+    echo "   适用：课程作业、学习整理、比赛报告"
+    echo ""
+    echo "3. 知识管理工作流"
     echo "   命令：$0 kb <文件/文件夹>"
     echo "   技能：/knowledge-manage-workflow"
     echo "   用途：批量处理文档、总结、分类、建立索引"
     echo ""
-    echo "3. 需求分析工作流"
+    echo "4. 需求分析工作流"
     echo "   命令：$0 feature <需求描述>"
     echo "   技能：/feature-design"
     echo "   用途：编写需求文档和技术设计（EARS 模式）"
     echo ""
-    echo "4. 文件整理工作流"
+    echo "5. 文件整理工作流"
     echo "   命令：$0 duplicates / $0 clean-dirs"
     echo "   用途：查找重复文件、清理空目录"
     echo ""
-    echo "5. Git 同步工作流"
+    echo "6. Git 同步工作流"
     echo "   命令：$0 sync"
     echo "   用途：git pull + push 同步到 GitHub"
     echo ""
-    echo "6. 文档压缩工作流"
+    echo "7. 文档压缩工作流"
     echo "   命令：$0 compress <文件>"
     echo "   用途：压缩大文档节省 token"
     echo ""
+    echo ""
+    echo "📌 重要提示："
+    echo "   - 写论文默认使用隔离模式（不参考知识库）"
+    echo "   - 仅当明确说\"参考知识库\"时才使用知识库模式"
+    echo "   - 这确保学术诚信，避免引用不可靠的个人资料"
 }
 
 # 命令 10: 显示帮助
@@ -215,7 +253,8 @@ do_help() {
     echo "  compress <文件>   压缩指定文档"
     echo "  duplicates        查找重复文件"
     echo "  clean-dirs        清理空目录"
-    echo "  paper <PDF/URL>   启动论文写作工作流"
+    echo "  paper <PDF/URL>   启动论文写作工作流（隔离模式，默认）"
+    echo "  paper-kb <主题>   启动论文写作工作流（知识库模式）"
     echo "  kb <文件/文件夹>  启动知识管理工作流"
     echo "  feature <描述>    启动需求设计工作流"
     echo "  workflows         显示所有可用工作流"
@@ -251,6 +290,9 @@ case "$1" in
         ;;
     paper)
         do_paper_workflow "$2"
+        ;;
+    paper-kb)
+        do_paper_workflow_with_kb "$2"
         ;;
     kb)
         do_kb_workflow "$2"
