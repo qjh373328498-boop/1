@@ -75,6 +75,7 @@
 
 ### knowledge-manage-workflow
 ```
+- 帮我整理这些资料
 - 整理资料
 - 整理文件
 - 批量处理文档
@@ -118,10 +119,13 @@
 
 ### data-analysis-workflow
 ```
-- 数据分析
-- 处理数据
-- 可视化
-- 图表
+- 帮我分析这个数据
+- 帮我分析这个 Excel
+- 分析这个数据
+- 处理 Excel
+- 财务分析
+- 制作图表
+- 用 Python 分析数据
 ```
 
 ### weekly-planning-workflow
