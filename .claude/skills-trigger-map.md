@@ -377,3 +377,36 @@ P3：三级关键词匹配
 ```
 
 ---
+
+---
+
+## 多意图处理策略
+
+### 优先级规则
+
+1. **第一意图优先** - 句子开头的意图权重最高
+2. **连接词后优先** - "先 X 然后 Y" → X 优先
+3. **转折后优先** - "X 但 Y" → Y 优先
+4. **高优先级 skill** - research-paper > competition > exam > feature > data > weekly > knowledge
+
+### 意图权重
+
+```
+research-paper-isolated: 10 (最高)
+competition-prep: 9
+exam-prep: 8
+feature-design: 7
+data-analysis: 6
+weekly-planning: 5
+knowledge-manage: 4
+literature-search: 3
+```
+
+### 示例
+
+```
+✅ "帮我写论文，需要查找文献" → research-paper (第一意图 + 高权重)
+✅ "先制定周计划，然后复习" → weekly-planning (连接词优先)
+✅ "主要是复习，顺便整理" → exam-prep (主要连接词)
+⚠️ "设计功能，但先分析数据" → 需要实现转折词识别
+```
