@@ -39,6 +39,10 @@
 - 写研究报告
 - 写文献综述
 - 论文写作
+- 论文
+- 写报告
+- 你看看这个论文
+- 看看这个报告
 ```
 
 ### research-paper-workflow-with-kb
@@ -63,6 +67,8 @@
 - 分析数据
 - 处理 Excel
 - 财务分析
+- financial analysis
+- analysis
 - 制作图表
 - 用 Python 分析数据
 ```
@@ -73,6 +79,8 @@
 - 安排日程
 - 时间管理
 - 周回顾
+- 周计划
+- 日程安排
 ```
 
 ### knowledge-manage-workflow
@@ -184,7 +192,7 @@
 
 ## 否定词列表（不触发）
 
-### 明确否定
+### 明确否定（中文）
 ```
 - 不想
 - 不要
@@ -194,6 +202,16 @@
 - 没有
 - 还没
 - 尚未
+```
+
+### 明确否定（英文）
+```
+- don't
+- do not
+- won't
+- would not
+- no need
+- never
 ```
 
 ### 疑问否定
@@ -307,3 +325,55 @@ P3：三级关键词匹配
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
 | v1.0 | 2026-04-30 | 初始版本 |
+
+---
+
+## 多意图优先级规则
+
+### 意图优先级顺序
+
+当一句话包含多个意图时，按以下优先级选择：
+
+1. **第一意图优先** - 句子的第一个 skill 意图
+2. **连接词后意图优先** - "先/但/然后/最后" 后的意图
+3. **高权重意图优先** - 一级关键词>二级>三级
+
+### 连接词识别
+
+```
+- 先 XXX，然后 YYY → 优先 X
+- 主要 XXX，顺便 YYY → 优先 X
+- 虽然 XXX，但是 YYY → 优先 Y
+- 除了 XXX，还要 YYY → 优先 X (主)，Y (次)
+```
+
+### 示例
+
+```
+"帮我写论文，需要查找文献" → research-paper (第一意图)
+"先制定周计划，然后帮我复习" → weekly-planning (先连接词)
+"主要是复习，顺便整理" → exam-prep (主要连接词)
+```
+
+---
+
+## 文件类型推断
+
+当用户提到文件名或上传文件时：
+
+| 文件扩展名 | 推断 skill | 关键词补充 |
+|-----------|-----------|-----------|
+| .xlsx / .xls | data-analysis | "Excel", "表格", "数据" |
+| .pdf | research-paper / literature-search | "论文", "文献", "PDF" |
+| .docx / .doc | knowledge-manage / feature-design | "文档", "Word", "需求" |
+| .ppt / .pptx | competition-prep | "PPT", "演示", "路演" |
+
+### 示例
+
+```
+"exam.xlsx 帮我分析" → data-analysis
+"thesis.pdf 看看" → research-paper
+"report.docx 整理" → knowledge-manage
+```
+
+---
