@@ -7,27 +7,26 @@
 
 ## 快速使用
 
-### 方式 1：Git Submodule（推荐）
-
-```bash
-cd your-project
-git submodule add https://github.com/your-user/your-repo.git.template/scheme-d
-mv .template/scheme-d/.claude .claude
-```
-
-### 方式 2：复制配置
+### 方式 1：复制配置（推荐）
 
 ```bash
 cd your-project
 cp -r /path/to/template/scheme-d/.claude .
 ```
 
-### 方式 3：使用安装脚本
+### 方式 2：使用安装脚本
 
 ```bash
 cd your-project
-curl -O https://raw.githubusercontent.com/your-user/your-repo/main/template/scheme-d/install.sh
-bash install.sh
+bash /path/to/template/scheme-d/install.sh
+```
+
+### 方式 3：Git Submodule
+
+```bash
+cd your-project
+git submodule add <repo-url> scheme-d-template
+cp -r scheme-d-template/.claude .
 ```
 
 ---
@@ -35,22 +34,25 @@ bash install.sh
 ## 目录结构
 
 ```
-.cl/
+.clude/
 ├── CLAUDE.md                  # 主配置（必读）
 ├── skills-index.md            # 88 个 skill 索引
 ├── skills-trigger-map.md      # 关键词触发映射
 ├── skills-config.json         # 置信度阈值配置
 └── workflows/                 # 10 个核心技能卡片
-    ├── exam-prep.card
-    ├── competition-prep.card
-    └── ...
+```
+
+**可选**：
+```
+skills/                        # 完整 skills 目录（可选，~50MB）
+└── */SKILL.md                 # 88 个完整技能文档
 ```
 
 ---
 
 ## 核心功能
 
-### 10 个核心 Skills
+### 10 个核心 Skills（内置）
 
 | Skill | 触发词 | 功能 |
 |-------|--------|------|
@@ -62,7 +64,6 @@ bash install.sh
 | literature-search | 查找文献 | 检索论文、参考文献 |
 | knowledge-manage | 整理资料 | 知识管理、批量处理 |
 | feature-design | 需求分析/设计 | 需求文档、技术设计 |
-| literature-search | 查找文献 | 文献检索 |
 | git-sync | 提交代码/git | Git 同步、submodule 处理 |
 
 ### 触发机制
@@ -78,6 +79,31 @@ bash install.sh
 
 ```
 不想、不要、不需要、别、没有、还没
+```
+
+---
+
+## 安装选项
+
+### 基础安装（推荐）
+
+只复制 `.claude/` 配置（~1MB）：
+- 包含 10 个核心技能卡片
+- 包含配置和索引
+- Token 优化 92%+
+
+```bash
+cp -r template/scheme-d/.claude your-project/
+```
+
+### 完整安装（可选）
+
+额外复制 `skills/` 目录（~50MB）：
+- 包含 88 个完整 skill 文档
+- 适合需要全部功能的用户
+
+```bash
+cp -r template/scheme-d/skills your-project/
 ```
 
 ---
@@ -125,7 +151,7 @@ bash install.sh
 
 ### 添加新的 Skill
 
-1. 在 `skills/` 目录创建新的 skill：
+1. 创建 skill 文档：
 ```bash
 mkdir skills/my-custom-skill
 cat > skills/my-custom-skill/SKILL.md
@@ -216,4 +242,5 @@ MIT © 2026
 ---
 
 **创建日期**：2026-04-30  
-**版本**：v1.0
+**版本**：v1.0  
+**最后更新**：2026-04-30 (精简版)
