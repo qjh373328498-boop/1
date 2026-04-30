@@ -193,7 +193,65 @@ do_feature_design() {
     print_info "Please use the skill: /feature-design \"$description\""
 }
 
-# 命令 10: 显示所有可用工作流
+# 命令 10: 触发考试复习工作流
+do_exam_prep() {
+    local subject="$1"
+    local exam_date="$2"
+    
+    if [ -z "$subject" ]; then
+        print_warning "Usage: $0 exam <科目名> [考试日期]"
+        print_info "示例：$0 exam 中级财务会计 2026-06-15"
+        exit 1
+    fi
+    
+    print_info "Starting exam preparation workflow for: $subject"
+    if [ -n "$exam_date" ]; then
+        print_info "Exam date: $exam_date"
+    fi
+    print_info "This will: extract knowledge points → mindmap → flashcards → study plan"
+    print_info "Please use the skill: /exam-prep-workflow $subject"
+}
+
+# 命令 11: 触发比赛备赛工作流
+do_competition_prep() {
+    local competition="$1"
+    local deadline="$2"
+    
+    if [ -z "$competition" ]; then
+        print_warning "Usage: $0 competition <比赛名> [截止日期]"
+        print_info "示例：$0 competition 学创杯 2026-07-15"
+        exit 1
+    fi
+    
+    print_info "Starting competition preparation workflow for: $competition"
+    if [ -n "$deadline" ]; then
+        print_info "Deadline: $deadline"
+    fi
+    print_info "This will: rules → plan → materials → PPT → Q&A"
+    print_info "Please use the skill: /competition-prep-workflow $competition"
+}
+
+# 命令 12: 触发文献检索工作流
+do_literature_search() {
+    local topic="$1"
+    local style="$2"
+    
+    if [ -z "$topic" ]; then
+        print_warning "Usage: $0 literature <研究主题> [引用格式]"
+        print_info "示例：$0 literature 环境会计 APA"
+        print_info "支持的引用格式：GB/T 7714, APA, MLA, Chicago"
+        exit 1
+    fi
+    
+    print_info "Starting literature search workflow for: $topic"
+    if [ -n "$style" ]; then
+        print_info "Citation style: $style"
+    fi
+    print_info "This will: search → manage → note → cite → review"
+    print_info "Please use the skill: /literature-search-workflow $topic"
+}
+
+# 命令 13: 显示所有可用工作流
 do_workflows() {
     echo "Available Workflows:"
     echo "===================="
@@ -212,25 +270,43 @@ do_workflows() {
     echo "   特点：✅ 可参考个人笔记、比赛资料"
     echo "   适用：课程作业、学习整理、比赛报告"
     echo ""
-    echo "3. 知识管理工作流"
+    echo "3. 考试复习与备考工作流 ⭐ 新增"
+    echo "   命令：$0 exam <科目名> [考试日期]"
+    echo "   技能：/exam-prep-workflow"
+    echo "   用途：知识点提取、思维导图、记忆卡片、复习计划"
+    echo "   适用：期末考试、考证复习"
+    echo ""
+    echo "4. 比赛备赛工作流 ⭐ 新增"
+    echo "   命令：$0 competition <比赛名> [截止日期]"
+    echo "   技能：/competition-prep-workflow"
+    echo "   用途：规则解读、备赛计划、商业计划书、PPT、答辩"
+    echo "   适用：学创杯、挑战杯、国创赛等"
+    echo ""
+    echo "5. 学术文献检索与引用工作流 ⭐ 新增"
+    echo "   命令：$0 literature <研究主题> [引用格式]"
+    echo "   技能：/literature-search-workflow"
+    echo "   用途：文献搜索、管理、笔记、引用生成、综述"
+    echo "   支持：GB/T 7714, APA, MLA, Chicago 等格式"
+    echo ""
+    echo "6. 知识管理工作流"
     echo "   命令：$0 kb <文件/文件夹>"
     echo "   技能：/knowledge-manage-workflow"
     echo "   用途：批量处理文档、总结、分类、建立索引"
     echo ""
-    echo "4. 需求分析工作流"
+    echo "7. 需求分析工作流"
     echo "   命令：$0 feature <需求描述>"
     echo "   技能：/feature-design"
     echo "   用途：编写需求文档和技术设计（EARS 模式）"
     echo ""
-    echo "5. 文件整理工作流"
+    echo "8. 文件整理工作流"
     echo "   命令：$0 duplicates / $0 clean-dirs"
     echo "   用途：查找重复文件、清理空目录"
     echo ""
-    echo "6. Git 同步工作流"
+    echo "9. Git 同步工作流"
     echo "   命令：$0 sync"
     echo "   用途：git pull + push 同步到 GitHub"
     echo ""
-    echo "7. 文档压缩工作流"
+    echo "10. 文档压缩工作流"
     echo "   命令：$0 compress <文件>"
     echo "   用途：压缩大文档节省 token"
     echo ""
@@ -255,6 +331,9 @@ do_help() {
     echo "  clean-dirs        清理空目录"
     echo "  paper <PDF/URL>   启动论文写作工作流（隔离模式，默认）"
     echo "  paper-kb <主题>   启动论文写作工作流（知识库模式）"
+    echo "  exam <科目>       启动考试复习工作流 ⭐"
+    echo "  competition <比赛> 启动比赛备赛工作流 ⭐"
+    echo "  literature <主题> 启动文献检索工作流 ⭐"
     echo "  kb <文件/文件夹>  启动知识管理工作流"
     echo "  feature <描述>    启动需求设计工作流"
     echo "  workflows         显示所有可用工作流"
@@ -293,6 +372,15 @@ case "$1" in
         ;;
     paper-kb)
         do_paper_workflow_with_kb "$2"
+        ;;
+    exam)
+        do_exam_prep "$2" "$3"
+        ;;
+    competition)
+        do_competition_prep "$2" "$3"
+        ;;
+    literature)
+        do_literature_search "$2" "$3"
         ;;
     kb)
         do_kb_workflow "$2"

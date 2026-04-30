@@ -336,6 +336,125 @@ git add . && git commit -m "auto: <操作描述>" && git push
 
 ---
 
+### 11. 考试复习与备考工作流
+
+**触发条件**：
+- 用户需要备考、复习、整理知识点
+- 制作记忆卡片、思维导图
+- 整理错题本、制定复习计划
+
+**使用技能**：`exam-prep-workflow`
+
+**完整流程**：
+```
+资料收集 → 知识点提取 → 思维导图 → 记忆卡片 → 习题整理 → 复习计划
+```
+
+**快捷命令**：
+```bash
+# 完整复习流程
+/exam-prep-workflow {课程名}
+
+# 指定考试日期
+/exam-prep-workflow {课程名} --exam-date 2026-06-15
+
+# 仅生成思维导图
+/exam-prep-workflow {课程名} --stage mindmap
+
+# 仅制作记忆卡片
+/exam-prep-workflow {课程名} --stage cards
+```
+
+**输出产物**：
+- 知识点摘要.md
+- 思维导图（SVG）
+- 记忆卡片（Anki/Quizlet 格式）
+- 错题本.md
+- 复习计划.md
+
+---
+
+### 12. 比赛备赛工作流
+
+**触发条件**：
+- 参加学科竞赛（学创杯、挑战杯、国创赛等）
+- 需要写商业计划书、路演 PPT
+- 准备答辩、模拟演练
+
+**使用技能**：`competition-prep-workflow`
+
+**完整流程**：
+```
+规则解读 → 备赛计划 → 材料准备 → PPT 优化 → 答辩题库 → 模拟演练
+```
+
+**快捷命令**：
+```bash
+# 完整备赛流程
+/competition-prep-workflow {比赛名}
+
+# 指定截止日期
+/competition-prep-workflow {比赛名} --deadline 2026-07-15
+
+# 仅 PPT 优化
+/competition-prep-workflow {比赛名} --stage ppt
+
+# 仅答辩题库
+/competition-prep-workflow {比赛名} --stage qa
+```
+
+**支持的比赛**：
+- 学创杯（财务决策模拟）
+- 挑战杯（创业计划）
+- 国创赛（创新创业）
+- 互联网+大赛
+- 案例分析大赛
+
+---
+
+### 13. 学术文献检索与引用工作流
+
+**触发条件**：
+- 查找学术文献
+- 管理参考文献
+- 生成引用格式
+- 撰写文献综述
+
+**使用技能**：`literature-search-workflow`
+
+**完整流程**：
+```
+文献搜索 → 文献管理 → 阅读笔记 → 引用生成 → 文献综述
+```
+
+**快捷命令**：
+```bash
+# 完整文献检索流程
+/literature-search-workflow {研究主题}
+
+# 指定引用格式
+/literature-search-workflow {主题} --citation-style APA
+/literature-search-workflow {主题} --citation-style "GB/T 7714"
+
+# 导出参考文献
+/literature-search-workflow {主题} --export bibtex
+```
+
+**支持的引用格式**：
+- GB/T 7714-2015（中国国家标准）
+- APA（第 7 版）
+- MLA
+- Chicago
+- BibTeX
+
+**推荐数据库**：
+- 中国知网（CNKI）
+- Google Scholar
+- Web of Science
+- 会计专业数据库（CSMAR/Wind）
+
+---
+
 ## 快捷键 / 命令别名
 
 | 命令 | 功能 |
@@ -379,13 +498,17 @@ git add . && git commit -m "auto: <操作描述>" && git push
 ### 工作流技能
 | Skill | 用途 |
 |-------|------|
-| `research-paper-workflow` | 学术研究/论文写作工作流 |
+| `research-paper-workflow-isolated` | 论文写作（隔离模式） |
+| `research-paper-workflow-with-kb` | 论文写作（知识库模式） |
 | `knowledge-manage-workflow` | 知识管理工作流 |
 | `feature-design` | 需求分析与技术设计 |
 | `feature-implementer` | 功能实现 |
 | `software-dev-workflow` | 软件开发工作流 |
 | `debug-troubleshoot-workflow` | 调试排错工作流 |
 | `content-publish-workflow` | 内容发布工作流 |
+| `exam-prep-workflow` | **考试复习与备考** ⭐ 新增 |
+| `competition-prep-workflow` | **比赛备赛** ⭐ 新增 |
+| `literature-search-workflow` | **文献检索与引用** ⭐ 新增 |
 
 ### 文档处理
 | Skill | 用途 |
