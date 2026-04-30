@@ -455,6 +455,83 @@ git add . && git commit -m "auto: <操作描述>" && git push
 
 ---
 
+### 14. 数据分析与可视化工作流
+
+**触发条件**：
+- 处理财务数据、Excel 数据分析
+- 制作图表、数据可视化
+- 计算财务比率、趋势分析
+
+**使用技能**：`data-analysis-workflow`
+
+**完整流程**：
+```
+数据导入 → 清洗 → 财务分析 → 可视化 → 报告
+```
+
+**快捷命令**：
+```bash
+# 完整分析流程
+/data-analysis-workflow {数据文件}
+
+# 仅财务比率计算
+/data-analysis-workflow {文件} --stage ratios
+
+# 仅可视化
+/data-analysis-workflow {文件} --stage visualize
+
+# 杜邦分析
+/data-analysis-workflow {文件} --type dupont
+
+# 趋势分析
+/data-analysis-workflow {文件} --type trend
+```
+
+**分析功能**：
+- 财务比率计算（偿债能力/盈利能力/营运能力）
+- 杜邦分析体系
+- 趋势分析（同比/环比/移动平均）
+- 对比分析（多公司/行业对比）
+- 可视化图表（趋势图/柱状图/饼图/热力图）
+
+---
+
+### 15. 周计划与时间管理工作流
+
+**触发条件**：
+- 制定周计划、安排日程
+- 每日任务清单、时间管理
+- 周回顾、目标追踪
+
+**使用技能**：`weekly-planning-workflow`
+
+**完整流程**：
+```
+目标设定 → 周计划 → 日程安排 → 每日执行 → 周回顾
+```
+
+**快捷命令**：
+```bash
+# 制定周计划
+/weekly-planning-workflow --week-start 2026-05-06
+
+# 生成今日计划
+/weekly-planning-workflow --daily-plan
+
+# 生成周回顾
+/weekly-planning-workflow --weekly-review
+
+# 查看目标进度
+/weekly-planning-workflow --goal-progress
+```
+
+**输出产物**：
+- 周计划.md（含本周重点、任务分解）
+- 每日计划与回顾.md
+- 周回顾.md（含完成度统计、改进措施）
+
+---
+
 ## 快捷键 / 命令别名
 
 | 命令 | 功能 |
@@ -506,9 +583,11 @@ git add . && git commit -m "auto: <操作描述>" && git push
 | `software-dev-workflow` | 软件开发工作流 |
 | `debug-troubleshoot-workflow` | 调试排错工作流 |
 | `content-publish-workflow` | 内容发布工作流 |
-| `exam-prep-workflow` | **考试复习与备考** ⭐ 新增 |
-| `competition-prep-workflow` | **比赛备赛** ⭐ 新增 |
-| `literature-search-workflow` | **文献检索与引用** ⭐ 新增 |
+| `exam-prep-workflow` | 考试复习与备考 ⭐ |
+| `competition-prep-workflow` | 比赛备赛 ⭐ |
+| `literature-search-workflow` | 文献检索与引用 ⭐ |
+| `data-analysis-workflow` | **数据分析与可视化** ⭐⭐ 新增 |
+| `weekly-planning-workflow` | **周计划与时间管理** ⭐⭐ 新增 |
 
 ### 文档处理
 | Skill | 用途 |

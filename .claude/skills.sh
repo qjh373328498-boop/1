@@ -251,7 +251,44 @@ do_literature_search() {
     print_info "Please use the skill: /literature-search-workflow $topic"
 }
 
-# 命令 13: 显示所有可用工作流
+# 命令 13: 触发数据分析工作流
+do_data_analysis() {
+    local file="$1"
+    local type="$2"
+    
+    if [ -z "$file" ]; then
+        print_warning "Usage: $0 data <Excel 文件> [分析类型]"
+        print_info "示例：$0 data 财务数据.xlsx dupont"
+        print_info "分析类型：dupont(杜邦分析), trend(趋势), compare(对比)"
+        exit 1
+    fi
+    
+    print_info "Starting data analysis workflow for: $file"
+    if [ -n "$type" ]; then
+        print_info "Analysis type: $type"
+    fi
+    print_info "This will: import → clean → analyze → visualize → report"
+    print_info "Please use the skill: /data-analysis-workflow $file"
+}
+
+# 命令 14: 触发周计划工作流
+do_weekly_plan() {
+    local week_start="$1"
+    local mode="$2"
+    
+    if [ -z "$mode" ]; then
+        mode="weekly"
+    fi
+    
+    print_info "Starting weekly planning workflow"
+    if [ -n "$week_start" ]; then
+        print_info "Week start: $week_start"
+    fi
+    print_info "Mode: $mode (weekly/daily/review)"
+    print_info "Please use the skill: /weekly-planning-workflow"
+}
+
+# 命令 15: 显示所有可用工作流
 do_workflows() {
     echo "Available Workflows:"
     echo "===================="
@@ -259,62 +296,61 @@ do_workflows() {
     echo "1. 学术研究/论文写作工作流（隔离模式 - 默认）"
     echo "   命令：$0 paper <PDF/URL>"
     echo "   技能：/research-paper-workflow-isolated"
-    echo "   用途：处理 PDF、翻译、格式化、生成配图、导出 Word/PPT"
     echo "   特点：❌ 不参考知识库，确保学术诚信"
-    echo "   适用：正式论文、学术竞赛"
     echo ""
     echo "2. 学术研究/论文写作工作流（知识库模式）"
     echo "   命令：$0 paper-kb <主题>"
     echo "   技能：/research-paper-workflow-with-kb"
-    echo "   用途：同上，但可参考个人资料"
     echo "   特点：✅ 可参考个人笔记、比赛资料"
-    echo "   适用：课程作业、学习整理、比赛报告"
     echo ""
-    echo "3. 考试复习与备考工作流 ⭐ 新增"
+    echo "3. 考试复习与备考工作流 ⭐"
     echo "   命令：$0 exam <科目名> [考试日期]"
     echo "   技能：/exam-prep-workflow"
     echo "   用途：知识点提取、思维导图、记忆卡片、复习计划"
-    echo "   适用：期末考试、考证复习"
     echo ""
-    echo "4. 比赛备赛工作流 ⭐ 新增"
+    echo "4. 比赛备赛工作流 ⭐"
     echo "   命令：$0 competition <比赛名> [截止日期]"
     echo "   技能：/competition-prep-workflow"
     echo "   用途：规则解读、备赛计划、商业计划书、PPT、答辩"
-    echo "   适用：学创杯、挑战杯、国创赛等"
     echo ""
-    echo "5. 学术文献检索与引用工作流 ⭐ 新增"
+    echo "5. 学术文献检索与引用工作流 ⭐"
     echo "   命令：$0 literature <研究主题> [引用格式]"
     echo "   技能：/literature-search-workflow"
     echo "   用途：文献搜索、管理、笔记、引用生成、综述"
-    echo "   支持：GB/T 7714, APA, MLA, Chicago 等格式"
     echo ""
-    echo "6. 知识管理工作流"
+    echo "6. 数据分析与可视化工作流 ⭐ 新增"
+    echo "   命令：$0 data <Excel 文件> [分析类型]"
+    echo "   技能：/data-analysis-workflow"
+    echo "   用途：财务数据分析、图表生成、杜邦分析"
+    echo "   适用：财务作业、数据分析报告"
+    echo ""
+    echo "7. 周计划与时间管理工作流 ⭐ 新增"
+    echo "   命令：$0 plan [周起始日期]"
+    echo "   技能：/weekly-planning-workflow"
+    echo "   用途：周计划制定、日程安排、周回顾"
+    echo "   适用：日常学习管理、时间安排"
+    echo ""
+    echo "8. 知识管理工作流"
     echo "   命令：$0 kb <文件/文件夹>"
     echo "   技能：/knowledge-manage-workflow"
-    echo "   用途：批量处理文档、总结、分类、建立索引"
     echo ""
-    echo "7. 需求分析工作流"
+    echo "9. 需求分析工作流"
     echo "   命令：$0 feature <需求描述>"
     echo "   技能：/feature-design"
-    echo "   用途：编写需求文档和技术设计（EARS 模式）"
     echo ""
-    echo "8. 文件整理工作流"
-    echo "   命令：$0 duplicates / $0 clean-dirs"
-    echo "   用途：查找重复文件、清理空目录"
-    echo ""
-    echo "9. Git 同步工作流"
+    echo "10. Git _sync 工作流"
     echo "   命令：$0 sync"
-    echo "   用途：git pull + push 同步到 GitHub"
+    echo "   技能：git pull + push"
     echo ""
-    echo "10. 文档压缩工作流"
+    echo "11. 文档压缩工作流"
     echo "   命令：$0 compress <文件>"
-    echo "   用途：压缩大文档节省 token"
+    echo "   技能：caveman-compress"
     echo ""
     echo ""
     echo "📌 重要提示："
     echo "   - 写论文默认使用隔离模式（不参考知识库）"
-    echo "   - 仅当明确说\"参考知识库\"时才使用知识库模式"
-    echo "   - 这确保学术诚信，避免引用不可靠的个人资料"
+    echo "   - 数据分析支持 dupont/trend/compare 等类型"
+    echo "   - 周计划可生成每日计划和周回顾"
 }
 
 # 命令 10: 显示帮助
@@ -334,6 +370,8 @@ do_help() {
     echo "  exam <科目>       启动考试复习工作流 ⭐"
     echo "  competition <比赛> 启动比赛备赛工作流 ⭐"
     echo "  literature <主题> 启动文献检索工作流 ⭐"
+    echo "  data <文件>       启动数据分析工作流 ⭐"
+    echo "  plan [日期]       启动周计划工作流 ⭐"
     echo "  kb <文件/文件夹>  启动知识管理工作流"
     echo "  feature <描述>    启动需求设计工作流"
     echo "  workflows         显示所有可用工作流"
@@ -381,6 +419,12 @@ case "$1" in
         ;;
     literature)
         do_literature_search "$2" "$3"
+        ;;
+    data)
+        do_data_analysis "$2" "$3"
+        ;;
+    plan)
+        do_weekly_plan "$2" "$3"
         ;;
     kb)
         do_kb_workflow "$2"
