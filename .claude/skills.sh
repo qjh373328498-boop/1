@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Claude Skills 快速启动脚本
-# 用于文件整理、Git 同步、文档压缩等高频场景
+# 用于文件整理、Git 同步、文档压缩、工作流触发等高频场景
 
 set -e
 
@@ -124,7 +124,86 @@ do_clean_empty_dirs() {
     fi
 }
 
-# 命令 6: 显示帮助
+# 命令 6: 触发论文写作工作流
+do_paper_workflow() {
+    local input="$1"
+    
+    if [ -z "$input" ]; then
+        print_warning "Usage: $0 paper <PDF 文件/URL>"
+        print_info "示例：$0 paper 知识库/论文.pdf"
+        exit 1
+    fi
+    
+    print_info "Starting research paper workflow for: $input"
+    print_info "This will: extract content → translate → format → generate diagrams"
+    print_info "Please use the skill: /research-paper-workflow $input"
+}
+
+# 命令 7: 触发知识管理工作流
+do_kb_workflow() {
+    local input="$1"
+    
+    if [ -z "$input" ]; then
+        print_warning "Usage: $0 kb <文件/文件夹>"
+        exit 1
+    fi
+    
+    print_info "Starting knowledge management workflow for: $input"
+    print_info "This will: process documents → summarize → organize → index"
+    print_info "Please use the skill: /knowledge-manage-workflow $input"
+}
+
+# 命令 8: 触发需求设计工作流
+do_feature_design() {
+    local description="$*"
+    
+    if [ -z "$description" ]; then
+        print_warning "Usage: $0 feature <需求描述>"
+        print_info "示例：$0 feature 添加用户登录功能"
+        exit 1
+    fi
+    
+    print_info "Starting feature design workflow"
+    print_info "Feature: $description"
+    print_info "This will create requirements.md and design.md using EARS patterns"
+    print_info "Please use the skill: /feature-design \"$description\""
+}
+
+# 命令 9: 显示所有可用工作流
+do_workflows() {
+    echo "Available Workflows:"
+    echo "===================="
+    echo ""
+    echo "1. 学术研究/论文写作工作流"
+    echo "   命令：$0 paper <PDF/URL>"
+    echo "   技能：/research-paper-workflow"
+    echo "   用途：处理 PDF、翻译、格式化、生成配图、导出 Word/PPT"
+    echo ""
+    echo "2. 知识管理工作流"
+    echo "   命令：$0 kb <文件/文件夹>"
+    echo "   技能：/knowledge-manage-workflow"
+    echo "   用途：批量处理文档、总结、分类、建立索引"
+    echo ""
+    echo "3. 需求分析工作流"
+    echo "   命令：$0 feature <需求描述>"
+    echo "   技能：/feature-design"
+    echo "   用途：编写需求文档和技术设计（EARS 模式）"
+    echo ""
+    echo "4. 文件整理工作流"
+    echo "   命令：$0 duplicates / $0 clean-dirs"
+    echo "   用途：查找重复文件、清理空目录"
+    echo ""
+    echo "5. Git 同步工作流"
+    echo "   命令：$0 sync"
+    echo "   用途：git pull + push 同步到 GitHub"
+    echo ""
+    echo "6. 文档压缩工作流"
+    echo "   命令：$0 compress <文件>"
+    echo "   用途：压缩大文档节省 token"
+    echo ""
+}
+
+# 命令 10: 显示帮助
 do_help() {
     echo "Claude Skills 快速启动脚本"
     echo ""
@@ -136,6 +215,10 @@ do_help() {
     echo "  compress <文件>   压缩指定文档"
     echo "  duplicates        查找重复文件"
     echo "  clean-dirs        清理空目录"
+    echo "  paper <PDF/URL>   启动论文写作工作流"
+    echo "  kb <文件/文件夹>  启动知识管理工作流"
+    echo "  feature <描述>    启动需求设计工作流"
+    echo "  workflows         显示所有可用工作流"
     echo "  help              显示帮助"
     echo ""
     echo "示例:"
@@ -143,6 +226,10 @@ do_help() {
     echo "  $0 sync"
     echo "  $0 compress 知识库/01-个人文档/个人学业档案索引.md"
     echo "  $0 duplicates"
+    echo "  $0 paper 知识库/论文.pdf"
+    echo "  $0 kb 知识库/02-学习资料/"
+    echo "  $0 feature 添加用户登录功能"
+    echo ""
 }
 
 # 主程序
@@ -161,6 +248,19 @@ case "$1" in
         ;;
     clean-dirs)
         do_clean_empty_dirs
+        ;;
+    paper)
+        do_paper_workflow "$2"
+        ;;
+    kb)
+        do_kb_workflow "$2"
+        ;;
+    feature)
+        shift
+        do_feature_design "$*"
+        ;;
+    workflows)
+        do_workflows
         ;;
     help|--help|-h|"")
         do_help

@@ -42,7 +42,7 @@ find 知识库 -name "*.md" -size +50k -exec python3 .claude/skills/caveman-comp
 ```
 
 **压缩范围**：
-- ✅ 压缩：`知识库/**/*`.md`
+- ✅ 压缩：`知识库/**/*.md`
 - ✅ 压缩：`CLAUDE.md`、`MEMORY.md`
 - ❌ 不压缩：代码文件、配置文件、数据文件
 
@@ -126,6 +126,161 @@ git push
 
 ---
 
+## 新增工作流
+
+### 6. 学术研究与论文写作工作流
+
+**触发条件**：
+- 用户需要写论文、研究报告、文献综述
+- 处理 PDF/Word 文档、提取内容、总结文献
+- 翻译外文资料、格式化论文、生成配图
+
+**使用技能**：`research-paper-workflow`
+
+**完整流程**：
+```
+资料收集 → 内容提取 → 翻译 → 格式化 → 配图 → 导出 Word/PDF
+```
+
+**快捷命令**：
+```bash
+# 完整流程
+/research-paper-workflow <URL 或文件>
+
+# 仅提取
+/research-paper-workflow <URL> --stage extract
+
+# 仅翻译
+/research-paper-workflow <文件> --stage translate --to zh-CN
+
+# 导出为 Word
+/research-paper-workflow <文件> --export docx
+
+# 导出为 PPT
+/research-paper-workflow <文件> --export pptx
+```
+
+**依赖 Skills**：
+- `pdf` / `docx` / `xlsx` / `pptx` - 文档处理
+- `baoyu-url-to-markdown` - 网页内容提取
+- `baoyu-youtube-transcript` - 视频字幕下载
+- `baoyu-translate` - 翻译（支持 technical/academic 风格）
+- `baoyu-format-markdown` - Markdown 格式化
+- `baoyu-diagram` - 流程图/架构图生成
+- `baoyu-article-illustrator` - 文章配图
+- `baoyu-slide-deck` - PPT 生成
+
+---
+
+### 7. 知识管理工作流
+
+**触发条件**：
+- 整理资料、构建知识库
+- 批量处理 PDF/Word/Excel 文档
+- 搜索相关内容、建立索引
+
+**使用技能**：`knowledge-manage-workflow`
+
+**完整流程**：
+```
+文档导入 → 内容提取 → 总结 → 格式化 → 知识组织 → 检索利用
+```
+
+**快捷命令**：
+```bash
+# 完整流程
+/knowledge-manage-workflow <文件/文件夹>
+
+# 仅总结
+/knowledge-manage-workflow <文档> --stage summarize
+
+# 批量处理
+/knowledge-manage-workflow <文件夹> --batch
+
+# 搜索
+/knowledge-manage-workflow --search "关键词"
+
+# 构建知识库
+/knowledge-manage-workflow <文件夹> --build-kb
+```
+
+**知识库目录结构**：
+```
+knowledge-base/
+├── inbox/           # 待处理文档
+├── processed/       # 已处理文档
+├── topics/          # 按主题分类
+├── projects/        # 按项目分类
+└── archive/         # 归档
+```
+
+---
+
+### 8. 需求分析与技术设计工作流
+
+**触发条件**：
+- 用户提出新功能需求
+- 需要编写需求文档和技术设计
+- 项目启动前的规格定义
+
+**使用技能**：`feature-design`
+
+**输出文档**：
+- `.monkeycode/specs/{FEATURE_NAME}/requirements.md` - 需求文档（EARS 模式）
+- `.monkeycode/specs/{FEATURE_NAME}/design.md` - 技术设计文档
+
+**需求质量标准**：
+- 符合 EARS 语法（Easy Approach to Requirements Syntax）
+- 通过 INCOSE 语义质量规则验证
+- 每条需求可测试、无歧义
+
+---
+
+### 9. 内容创作与发布工作流
+
+**触发条件**：
+- 创建社交媒体内容（微信公众号、微博、X）
+- 生成信息图、漫画、插图
+- Markdown 转 HTML、生成封面图
+
+**可用 Skills**：
+| Skill | 用途 |
+|-------|------|
+| `baoyu-post-to-wechat` | 微信公众号文章发布 |
+| `baoyu-post-to-weibo` | 微博发布 |
+| `baoyu-post-to-x` | X(Twitter) 发布 |
+| `baoyu-infographic` | 信息图表生成（21 种布局） |
+| `baoyu-comic` | 漫画生成 |
+| `baoyu-cover-image` | 封面图生成 |
+| `baoyu-markdown-to-html` | Markdown 转 HTML |
+| `baoyu-image-gen` | AI 图像生成 |
+| `baoyu-imagine` | 创意图像生成 |
+
+---
+
+### 10. 前端开发工作流
+
+**触发条件**：
+- 创建前端项目
+- UI/UX 设计
+- 组件开发、调试
+
+**可用 Skills**：
+| Skill | 用途 |
+|-------|------|
+| `frontend-project-creator` | 创建前端项目 |
+| `frontend-design` | 前端设计 |
+| `ui-ux-pro-max` | UI/UX 设计 |
+| `design-system-patterns` | 设计系统模式 |
+| `web-artifacts-builder` | Web 组件构建 |
+| `webapp-testing` | Web 应用测试 |
+| `tailwindcss-helper` | Tailwind CSS 辅助 |
+| `shadcnui-helper` | shadcn/ui 组件辅助 |
+| `mui-helper` | Material-UI 辅助 |
+| `deploy-website` | 网站部署预览 |
+
+---
+
 ## 自动化规则
 
 ### 规则 1：Commit 前自动检查
@@ -147,6 +302,18 @@ git status --porcelain
 # 提醒用户使用 caveman-compress
 ```
 
+### 规则 4：文件操作自动同步 Git
+```bash
+# 每次创建/修改文件后自动执行
+git add . && git commit -m "auto: <操作描述>" && git push
+```
+
+### 规则 5：Skills 自动调用
+- 检测到 PDF/Word/Excel 文件 → 自动调用对应处理 skill
+- 检测到 URL → 自动调用 `baoyu-url-to-markdown`
+- 用户提到"翻译" → 自动调用 `baoyu-translate`
+- 用户提到"画图"、"配图" → 自动调用 `baoyu-diagram` 或 `baoyu-infographic`
+
 ---
 
 ## 快捷键 / 命令别名
@@ -157,6 +324,11 @@ git status --porcelain
 | `/compress <文件>` | 压缩指定文档 |
 | `/organize` | 自动整理工作区文件 |
 | `/sync` | Git pull + push 同步 |
+| `/paper <文件/URL>` | 启动论文写作工作流 |
+| `/kb <文件/文件夹>` | 启动知识管理工作流 |
+| `/feature <需求描述>` | 启动需求分析工作流 |
+| `/design` | UI/UX 设计辅助 |
+| `/deploy` | 部署网站预览 |
 
 ---
 
@@ -165,11 +337,111 @@ git status --porcelain
 | 文件 | 用途 |
 |------|------|
 | `.claude/CLAUDE.md` | 本配置文件 |
-| `.claude/skills/` | 技能脚本目录 |
+| `.claude/skills/` | 技能脚本目录（**80+ skills**） |
+| `.claude/README.md` | Skills 使用指南 |
+| `.claude/skills.sh` | 命令行快捷脚本 |
 | `知识库/00-索引/` | 快速检索表 |
 | `MEMORY.md` | 用户偏好记忆 |
 
+## 可用 Skills 完整列表（80+）
+
+### 核心技能
+| Skill | 用途 |
+|-------|------|
+| `caveman-commit` | 自动生成 commit 消息 |
+| `caveman-compress` | 文档压缩（节省 token） |
+| `caveman-review` | 代码审查 |
+| `build` | 项目构建 |
+| `check` | 项目检查 |
+| `spec` | 规格定义 |
+| `backprop` | 错误回溯分析 |
+
+### 工作流技能
+| Skill | 用途 |
+|-------|------|
+| `research-paper-workflow` | 学术研究/论文写作工作流 |
+| `knowledge-manage-workflow` | 知识管理工作流 |
+| `feature-design` | 需求分析与技术设计 |
+| `feature-implementer` | 功能实现 |
+| `software-dev-workflow` | 软件开发工作流 |
+| `debug-troubleshoot-workflow` | 调试排错工作流 |
+| `content-publish-workflow` | 内容发布工作流 |
+
+### 文档处理
+| Skill | 用途 |
+|-------|------|
+| `pdf` | PDF 文档处理 |
+| `docx` | Word 文档处理 |
+| `xlsx` | Excel 表格处理 |
+| `pptx` | PPT 幻灯片处理 |
+| `doc-coauthoring` | 文档协作撰写 |
+
+### 内容创作（Baoyu 系列）
+| Skill | 用途 |
+|-------|------|
+| `baoyu-translate` | 翻译（支持多种风格） |
+| `baoyu-format-markdown` | Markdown 格式化 |
+| `baoyu-markdown-to-html` | Markdown 转 HTML |
+| `baoyu-url-to-markdown` | 网页内容提取 |
+| `baoyu-youtube-transcript` | YouTube 字幕下载 |
+| `baoyu-diagram` | 流程图/架构图生成 |
+| `baoyu-infographic` | 信息图表生成 |
+| `baoyu-article-illustrator` | 文章配图 |
+| `baoyu-cover-image` | 封面图生成 |
+| `baoyu-image-gen` / `baoyu-imagine` | AI 图像生成 |
+| `baoyu-comic` | 漫画生成 |
+| `baoyu-slide-deck` | PPT 生成 |
+| `baoyu-post-to-wechat` | 微信公众号发布 |
+| `baoyu-post-to-weibo` | 微博发布 |
+| `baoyu-post-to-x` | X(Twitter) 发布 |
+
+### 前端开发
+| Skill | 用途 |
+|-------|------|
+| `frontend-design` | 前端设计 |
+| `frontend-project-creator` | 创建前端项目 |
+| `ui-ux-pro-max` | UI/UX 设计 |
+| `design-system-patterns` | 设计系统模式 |
+| `tailwindcss-helper` | Tailwind CSS 辅助 |
+| `shadcnui-helper` | shadcn/ui 辅助 |
+| `mui-helper` | Material-UI 辅助 |
+| `web-artifacts-builder` | Web 组件构建 |
+| `webapp-testing` | Web 应用测试 |
+| `deploy-website` | 网站部署预览 |
+| `react-code-fix-linter` | React 代码修复 |
+| `react-native-ui-animation` | React Native 动画 |
+
+### 后端开发
+| Skill | 用途 |
+|-------|------|
+| `golang-patterns` | Go 语言模式 |
+| `golang-testing` | Go 语言测试 |
+| `golang-code-review` | Go 代码审查 |
+
+### 项目管理
+| Skill | 用途 |
+|-------|------|
+| `implementation-planner` | 实施计划制定 |
+| `executing-plans` | 计划执行 |
+| `finishing-a-development-branch` | 完成开发分支 |
+| `project-wiki` | 项目 Wiki 生成 |
+
+### 其他工具
+| Skill | 用途 |
+|-------|------|
+| `brainstorming` | 头脑风暴 |
+| `skill-creator` | 创建新 skill |
+| `mcp-builder` | MCP 构建器 |
+| `dispatching-parallel-agents` | 并行 Agent 调度 |
+| `subagent-driven-development` | Subagent 开发 |
+| `systematic-debugging` | 系统化调试 |
+| `security-review-audit` | 安全审查 |
+| `test-driven-development` | 测试驱动开发 |
+| `verification-before-completion` | 完成前验证 |
+| `requesting-code-review` | 请求代码审查 |
+| `receiving-code-review` | 接受代码审查 |
+
 ---
 
-**最后更新**：2026-04-29  
+**最后更新**：2026-04-30  
 **维护**：根据使用场景持续优化
