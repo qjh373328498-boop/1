@@ -1,10 +1,40 @@
-# Claude 配置 — 工作流集成（精简版）
+# Claude 配置 — 工作流集成（极简版）
 
-> 方案 D：按需加载技能  
-> 常驻 Token：~2,100（30 技能核心触发词 + 索引）  
-> 最后更新：2026-05-01  
-> 版本：v2.0（90 技能完整整合后）  
-> 触发词外部化：核心词常驻，完整表按需加载
+> **方案 D v3.0：三级触发 + 动态加载**  
+> **常驻 Token**：~1,200（12 高频技能 + 精简索引）  
+> **按需加载**：78 技能触发词（延迟加载）  
+> **最后更新**：2026-05-01  
+> **版本**：v3.0（Token 极限优化）
+
+---
+
+## Token 优化机制（新版）
+
+### 1. 三级触发架构（节省 ~8,000 tokens）
+
+| 级别 | 位置 | 技能数 | Token | 加载时机 |
+|------|------|--------|-------|----------|
+| **L1 - 高频核心** | `CLAUDE.md` | 12 | ~600 | **常驻** |
+| **L2 - 扩展触发词** | `skills-trigger-map.md` | 78 | ~2,500 | 意图明确时 |
+| **L3 - 技能文档** | `skills/*/SKILL.md` | 90 | ~50,000 | 触发后 |
+
+### 2. 动态加载策略
+
+```
+触发条件：
+1. 用户输入 → 匹配 L1 核心词（12 技能）
+2. 精确匹配 (≥80%) → 直接触发 skill
+3. 置信度 (50-79%) → 加载 L2 扩展词表
+4. 模糊意图 (<50%) → 询问确认
+5. 否定词 → 不触发
+```
+
+### 3. 技能索引精简
+
+`skills-index.md` 仅保留：
+- 技能名 → 文件路径映射
+- 不含触发词/关键词
+- 常驻：~400 tokens
 
 ---
 
@@ -31,55 +61,38 @@ git add . && git commit -m "auto: <描述>" && git push
 
 **机制**：检测关键词 → 读取对应 skill → 执行
 
-### 核心触发词（Level 1 - 直接触发）
+## 核心触发词（L1 - 高频常驻）
 
-| 触发词 | 技能 | 批次 |
+| 触发词 | 技能 | 频率 |
 |--------|------|------|
-| 复习/备考/考试/背题/划重点 | `exam-prep` | 核心 |
-| 比赛/竞赛/备赛/学创杯/挑战杯 | `competition-prep` | 核心 |
-| 写论文/写报告/论文写作/文献综述 | `research-paper-isolated` | 核心 |
-| 参考知识库/用知识库/结合之前资料 | `research-paper-with-kb` | 核心 |
-| 查文献/找论文/引用格式/参考文献 | `literature-search` | 核心 |
-| 分析数据/处理 Excel/财务分析/图表 | `data-analysis` | 核心 |
-| 周计划/日程安排/时间管理/周回顾 | `weekly-planning` | 核心 |
-| 整理资料/整理文件/批量处理/索引 | `knowledge-manage` | 核心 |
-| 需求分析/功能设计/写需求文档 | `feature-design` | 核心 |
-| 剪辑视频/剪视频/去废话/加字幕 | `video-use` | 核心 |
-| 生成视频/做视频/动画视频/从零开始 | `hyperframes` | 核心 |
-| 转语音/TTS/配音/语音合成/朗读 | `tts-voice` | 核心 |
-| 背景音乐/BGM/配乐/生成音乐 | `music-gen` | 核心 |
-| Git/同步/commit/push | `git-sync` | 核心 |
-| YouTube 下载/提取字幕/参考视频 | `baoyu-youtube-transcript` | 第 1 批 |
-| 网页提取/下载网页/转 Markdown | `baoyu-url-to-markdown` | 第 1 批 |
-| 流程图/示意图/图表 | `baoyu-diagram` | 第 1 批 |
-| 翻译/多语言/字幕翻译 | `baoyu-translate` | 第 1 批 |
-| 格式化/排版/Markdown 优化 | `baoyu-format-markdown` | 第 1 批 |
-| PPT/幻灯片/演示文稿 | `baoyu-slide-deck` | 第 2 批 |
-| 转 HTML/生成网页 | `baoyu-markdown-to-html` | 第 2 批 |
-| 压缩图片/优化图片/转 WebP | `baoyu-compress-image` | 第 2 批 |
-| 公众号/微信发布 | `baoyu-post-to-wechat` | 第 2 批 |
-| 微博发布 | `baoyu-post-to-weibo` | 第 2 批 |
-| Twitter/X 发布 | `baoyu-post-to-x` | 第 2 批 |
-| 配图/插图/旁白配图 | `baoyu-article-illustrator` | 第 3 批 |
-| 信息卡片/金句卡片 | `baoyu-image-cards` | 第 3 批 |
-| 头脑风暴/创意/点子 | `brainstorming` | 第 3 批 |
-| 高质量图片/精细图片/AI 绘画 | `baoyu-imagine` | 整合 |
-| 漫画分镜/故事性视频/教育漫画 | `baoyu-comic` | 整合 |
+| 复习/备考/考试 | `exam-prep` | 🔥 |
+| 比赛/竞赛/备赛 | `competition-prep` | 🔥 |
+| 写论文/写报告 | `research-paper-isolated` | 🔥 |
+| 分析数据/Excel | `data-analysis` | 🔥 |
+| 周计划/日程 | `weekly-planning` | ⭐ |
+| 整理资料/文件 | `knowledge-manage` | ⭐ |
+| 剪辑视频/剪视频 | `video-use` | 🔥 |
+| 生成视频/做视频 | `hyperframes` | 🔥 |
+| 转语音/TTS/配音 | `tts-voice` | 🔥 |
+| BGM/配乐/音乐 | `music-gen` | 🔥 |
+| YouTube 下载/字幕 | `baoyu-youtube-transcript` | 🔥 |
+| 网页提取/转 Markdown | `baoyu-url-to-markdown` | 🔥 |
+
+**常驻总计**：12 技能，~50 触发词，~600 tokens
 
 ### 触发规则
 
 **匹配流程**：
 ```
-1. 用户输入 → 匹配 CLAUDE.md 核心触发词
+1. 用户输入 → 匹配 L1 核心词（12 技能）
 2. 精确匹配 (≥80%) → 直接触发 skill
-3. 模糊匹配 (60-79%) → 自动加载 skills-trigger-map.md 精确匹配
-4. 低置信度 (<40%) → 询问确认
+3. 置信度 (50-79%) → 加载 L2 扩展词表
+4. 模糊意图 (<50%) → 询问确认
 5. 否定词 (不想/不要/不需要/别) → 不触发
 ```
 
-**核心触发词**：30 技能，~140 词，常驻内存  
-**完整映射表**：按需加载（模糊匹配/触发失败/用户请求时）  
-**工作流**：视频制作 (27+ 技能) / 内容发布 (15 技能) / 考试/比赛/论文
+**L2 扩展触发词**：78 技能，~500 词，存储于 `skills-trigger-map.md`  
+**加载时机**：置信度 50-79% 时按需加载
 
 ---
 
@@ -136,14 +149,13 @@ git add . && git commit && git push
 
 | 文件 | 用途 | 加载时机 | Token | 版本 |
 |------|------|----------|-------|------|
-| `CLAUDE.md` | 核心配置 +30 技能触发词 | 常驻 | ~1,500 | v2.0 |
-| `skills-index.md` | 技能索引表 (90 技能) | 常驻 | ~600 | v1.2 |
-| `skills-trigger-map.md` | 完整触发词映射 | 按需 | ~3,000 | v2.0 |
+| `CLAUDE.md` | L1 核心配置 (12 技能) | 常驻 | ~600 | v3.0 |
+| `skills-index.md` | 技能路径索引 (90 技能) | 常驻 | ~400 | v3.0 |
+| `skills-trigger-map.md` | L2 扩展触发词 (78 技能) | 按需 | ~2,500 | v3.0 |
 | `video-production-pipeline.card` | 视频工作流 (27+ 技能) | 按需 | - | v6.0 |
 | `content-publish-workflow/SKILL.md` | 内容发布流 (15 技能) | 按需 | - | v2.0 |
 | `trigger-test.md` | 触发词测试工具 | 按需 | - | v1.0 |
-| `trigger-sync-checklist.md` | 同步检查清单 | 按需 | - | v1.0 |
-| **常驻总计** | - | - | **~2,100** | - |
+| **常驻总计** | - | - | **~1,000** | - |
 
 ---
 
@@ -163,37 +175,33 @@ git add . && git commit && git push
 
 ---
 
-## 副作用缓解措施
+## 副作用缓解
 
-### 1. 核心词遗漏 → 自动加载完整映射表
-
-```
-当核心触发词匹配但置信度<80% 时：
-1. 自动加载 skills-trigger-map.md
-2. 进行精确匹配
-3. 匹配成功后触发 skill
-```
-
-### 2. 映射表不同步 → 强制同步检查
+### 1. 核心词遗漏
 
 ```
-每次修改触发词时：
-1. 必须同时更新 CLAUDE.md 和 skills-trigger-map.md
-2. 必须更新两个文件的版本号
-3. 必须运行 ./skills.sh check-sync
-4. 必须测试新触发词
+置信度 50-79% → 自动加载 skills-trigger-map.md
+```
+
+### 2. 映射表不同步
+
+```
+修改触发词时：
+1. 同步更新 CLAUDE.md + skills-trigger-map.md
+2. 更新两个文件的版本号
+3. 运行 ./skills.sh check-sync
 ```
 
 详见：`trigger-sync-checklist.md`
 
-### 3. 触发失败难调试 → 测试工具 + 日志
+### 3. 触发失败调试
 
 ```
 调试命令：
-- ./skills.sh test "<输入>" - 测试单个输入
-- ./skills.sh test-batch test-cases.md - 批量测试
-- ./skills.sh check-sync - 检查同步状态
-- export SKILL_DEBUG=1 - 启用调试日志
+- ./skills.sh test "<输入>" - 单个测试
+- ./skills.sh test-batch - 批量测试
+- ./skills.sh check-sync - 同步检查
+- export SKILL_DEBUG=1 - 调试日志
 ```
 
 详见：`trigger-test.md`
@@ -202,13 +210,11 @@ git add . && git commit && git push
 
 ## 相关文档
 
-- **整合报告**：`SKILLS_INTEGRATION_REPORT.md`（30+ 技能整合，v6.0）
-- **MiniMax 音乐**：`MINIMAX_MUSIC_INTEGRATION.md`（迷你音乐技能整合指南）
-- **音频调研**：`AUDIO_SKILL_RESEARCH.md`（音效/音频技能调研报告）
+- **整合报告**：`SKILLS_INTEGRATION_REPORT.md`（v6.0）
+- **MiniMax 音乐**：`MINIMAX_MUSIC_INTEGRATION.md`
+- **音频调研**：`AUDIO_SKILL_RESEARCH.md`
 - **方案 D 文档**：`.claude/docs/方案 D_*.md`
 - **视频工作流**：`.claude/workflows/video-production-pipeline.card`
 - **内容发布流**：`.claude/skills/content-publish-workflow/SKILL.md`
 
 ---
-
-**完整文档**：见 `/workspace/方案 D_*.md`
