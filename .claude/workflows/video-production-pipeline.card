@@ -6,16 +6,18 @@
 创意 → 脚本 → 配音 → 画面 → 字幕 → BGM → 成品
 ```
 
-## 技能矩阵
+## 技能矩阵（含图片生成）
 
 | 阶段 | 技能 | 工具 | 输出 |
 |------|------|------|------|
-| **1. 脚本** | 文案生成 | Claude | 文字脚本 |
-| **2. 配音** | TTS 语音 | tts-voice | 人声音频.mp3 |
-| **3. 画面** | 视频生成 | hyperframes | 视频画面.mp4 |
-| **4. 字幕** | 字幕生成 | auto-subtitles | 字幕文件.srt |
-| **5. BGM** | 背景音乐 | music-gen | 背景音乐.mp3 |
-| **6. 剪辑** | 最终合成 | video-use | 成品视频.mp4 |
+| **1. 脚本** | 文案生成 | Claude | 文字脚本.txt |
+| **2. 配音** | TTS 语音 | tts-voice | narration.mp3 + narration.vtt |
+| **3. 分镜** | 场景分析 | Claude | 分镜脚本.json |
+| **4. 图片** | 素材生成 | baoyu-image-gen 等 | frame_01.png ~ frame_NN.png |
+| **5. 视频** | 图片转视频 | FFmpeg | visuals.mp4 |
+| **6. 字幕** | 字幕同步 | auto-subtitles | subtitles.srt |
+| **7. BGM** | 背景音乐 | music-gen | bgm.mp3 |
+| **8. 剪辑** | 最终合成 | video-use | final_video.mp4 |
 
 ---
 
@@ -74,28 +76,85 @@ python3 -m edge_tts \
 - `narration.mp3` - 人声音频
 - `narration.vtt` - 字幕文件
 
-### 阶段 3：画面生成（可选两种方案）
-
-#### 方案 A：hyperframes（无素材）
+### 阶段 3：分镜脚本生成（新增）
 ```bash
-# 生成 HTML 描述，渲染成视频
-npx hyperframes render video.html -o visuals.mp4
+# 基于脚本和配音时长，生成每帧图片的描述
+# 输出：storyboard.json
+
+{
+  "frames": [
+    {
+      "id": 1,
+      "time": "00:00-00:05",
+      "narration": "大家好，今天介绍一款桌游...",
+      "image_prompt": "德国心脏病桌游盒子封面，卡通风格，色彩鲜艳",
+      "image_file": "frame_01.png"
+    },
+    {
+      "id": 2,
+      "time": "00:05-00:15",
+      "narration": "游戏包含 32 张卡牌，每张卡牌上有 1-5 种水果",
+      "image_prompt": "桌游卡牌平铺展示，显示不同水果图案：草莓、柠檬、樱桃、葡萄、香蕉",
+      "image_file": "frame_02.png"
+    },
+    ...
+  ]
+}
 ```
 
-#### 方案 B：video-use（有素材）
+### 阶段 4：图片生成（新增 - 核心优化）
 ```bash
-# 使用原始素材剪辑
-cd raw-footage
-# video-use 自动处理
+# 遍历分镜脚本，为每一帧生成图片
+for frame in storyboard.frames:
+  baoyu-image-gen \
+    --prompt "{frame.image_prompt}" \
+    --image "{frame.image_file}" \
+    --ar "16:9" \
+    --quality "high"
+
+# 或使用信息图技能（适合数据展示）
+baoyu-infographic \
+  --title "水果概率分布" \
+  --data "草莓 40%, 柠檬 25%, 樱桃 15%, 葡萄 12%, 香蕉 8%" \
+  --image "probability_chart.png"
+
+# 或生成封面图
+baoyu-cover-image \
+  --title "德国心脏病桌游介绍" \
+  --subtitle "规则详解 + 获胜策略" \
+  --image "video_cover.png"
 ```
 
-### 阶段 4：字幕生成（如果 tts 没生成）
+**可用图片技能**：
+| 技能 | 用途 | 示例 |
+|------|------|------|
+| baoyu-image-gen | 通用图片 | 桌游封面、卡牌、场景 |
+| baoyu-infographic | 数据图表 | 概率分布、统计信息 |
+| baoyu-cover-image | 视频封面 | YouTube/B 站封面 |
+| baoyu-diagram | 流程图 | 游戏规则流程图 |
+| baoyu-image-cards | 信息卡片 | 关键信息摘要卡片 |
+| baoyu-article-illustrator | 配图 | 旁白内容配图 |
+
+### 阶段 5：图片转视频
+```bash
+# 将生成的图片序列转为视频
+# 每张图片显示 3-5 秒（根据配音时长调整）
+
+ffmpeg -framerate 1/3 -i frame_%02d.png \
+  -c:v libx264 -pix_fmt yuv420p \
+  -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" \
+  visuals.mp4
+
+# 输出：visuals.mp4（无声视频，图片序列）
+```
+
+### 阶段 6：字幕生成（同步配音）
 ```bash
 # 使用 whisper 自动生成字幕
 python autosub.py --input narration.mp3 --output subtitles.srt
 ```
 
-### 阶段 5：背景音乐生成（music-gen）
+### 阶段 7：背景音乐生成（music-gen）
 ```bash
 # 生成 BGM
 python music_gen.py \
@@ -104,7 +163,7 @@ python music_gen.py \
   --output bgm.mp3
 ```
 
-### 阶段 6：最终合成（video-use）
+### 阶段 8：最终合成（video-use）
 ```bash
 # 合并所有轨道
 # 轨道 1：画面 (visuals.mp4)
@@ -125,21 +184,26 @@ ffmpeg -i visuals.mp4 \
 
 ## 工作流卡片设计
 
-### total-video-maker.card
+### video-production-pipeline.card
 ```yaml
-名称：一体化视频生成
+名称：一体化视频生成（含图片生成）
 触发词：
   - "做个视频"
   - "生成视频"
   - "视频制作"
-  - "从头做个视频"
+  - "从零开始做视频"
+  - "没有素材做个视频"
 包含子技能：
-  1. 脚本生成
-  2. tts-voice（配音）
-  3. hyperframes（画面）
-  4. video-use（剪辑）
-  5. auto-subtitles（字幕）
-  6. music-gen（BGM）
+  1. 脚本生成（文案）
+  2. tts-voice（配音 + VTT 字幕）
+  3. 分镜脚本生成（场景分析）
+  4. baoyu-image-gen（图片生成）⭐ 新增
+  5. baoyu-infographic（数据图表）⭐ 新增
+  6. baoyu-cover-image（封面图）⭐ 新增
+  7. FFmpeg（图片转视频）
+  8. auto-subtitles（字幕同步）
+  9. music-gen（BGM）
+  10. video-use（最终合成）
 ```
 
 ---
