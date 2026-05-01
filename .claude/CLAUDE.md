@@ -1,9 +1,9 @@
 # Claude 配置 — 工作流集成（精简版）
 
 > 方案 D：按需加载技能  
-> 常驻 Token：~1,500（30 技能核心触发词 + 索引）  
+> 常驻 Token：~2,100（30 技能核心触发词 + 索引）  
 > 最后更新：2026-05-01  
-> 版本：v1.4（25 技能整合后）  
+> 版本：v2.0（90 技能完整整合后）  
 > 触发词外部化：核心词常驻，完整表按需加载
 
 ---
@@ -79,7 +79,7 @@ git add . && git commit -m "auto: <描述>" && git push
 
 **核心触发词**：30 技能，~140 词，常驻内存  
 **完整映射表**：按需加载（模糊匹配/触发失败/用户请求时）  
-**工作流**：视频制作 (25 技能) / 内容发布 (15 技能)
+**工作流**：视频制作 (27+ 技能) / 内容发布 (15 技能) / 考试/比赛/论文
 
 ---
 
@@ -136,10 +136,10 @@ git add . && git commit && git push
 
 | 文件 | 用途 | 加载时机 | Token | 版本 |
 |------|------|----------|-------|------|
-| `CLAUDE.md` | 核心配置 +28 技能触发词 | 常驻 | ~1,500 | v1.3 |
+| `CLAUDE.md` | 核心配置 +30 技能触发词 | 常驻 | ~1,500 | v2.0 |
 | `skills-index.md` | 技能索引表 (90 技能) | 常驻 | ~600 | v1.2 |
-| `skills-trigger-map.md` | 完整触发词映射 | 按需 | ~3,000 | v1.4 |
-| `video-production-pipeline.card` | 视频工作流 (25 技能) | 按需 | - | v4.0 |
+| `skills-trigger-map.md` | 完整触发词映射 | 按需 | ~3,000 | v2.0 |
+| `video-production-pipeline.card` | 视频工作流 (27+ 技能) | 按需 | - | v6.0 |
 | `content-publish-workflow/SKILL.md` | 内容发布流 (15 技能) | 按需 | - | v2.0 |
 | `trigger-test.md` | 触发词测试工具 | 按需 | - | v1.0 |
 | `trigger-sync-checklist.md` | 同步检查清单 | 按需 | - | v1.0 |
@@ -149,11 +149,11 @@ git add . && git commit && git push
 
 ## 工作流总览
 
-### 视频制作工作流（25 技能）
+### 视频制作工作流（27+ 技能）
 ```
-资料收集 → 创意 → 脚本 → 配音 → 分镜 → 素材 → 视频 → 字幕 → BGM → 多语言 → 发布
+资料收集 → 创意 → 脚本 → 配音 → 分镜 → 素材 → 视频 → 字幕 → **BGM/音乐** → 多语言 → 发布
 ```
-**触发词**：做个视频/生成视频/YouTube 下载/多语言视频/漫画分镜/高质量图片
+**触发词**：做个视频/生成视频/YouTube 下载/多语言视频/漫画分镜/高质量图片/背景音乐
 
 ### 内容发布工作流（15 技能）
 ```
@@ -202,7 +202,9 @@ git add . && git commit && git push
 
 ## 相关文档
 
-- **整合报告**：`SKILLS_INTEGRATION_REPORT.md`（23 技能整合完整说明）
+- **整合报告**：`SKILLS_INTEGRATION_REPORT.md`（30+ 技能整合，v6.0）
+- **MiniMax 音乐**：`MINIMAX_MUSIC_INTEGRATION.md`（迷你音乐技能整合指南）
+- **音频调研**：`AUDIO_SKILL_RESEARCH.md`（音效/音频技能调研报告）
 - **方案 D 文档**：`.claude/docs/方案 D_*.md`
 - **视频工作流**：`.claude/workflows/video-production-pipeline.card`
 - **内容发布流**：`.claude/skills/content-publish-workflow/SKILL.md`
