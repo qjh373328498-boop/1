@@ -1,8 +1,9 @@
 # Skills 索引表
 
-> 版本：v1.0  
-> 最后更新：2026-04-30  
-> 说明：按需加载技能索引，常驻仅 ~500 tokens
+> 版本：v1.1  
+> 最后更新：2026-05-01  
+> 说明：按需加载技能索引，常驻仅 ~500 tokens  
+> 23 技能整合：已整合到视频/内容工作流
 
 ---
 
@@ -12,6 +13,46 @@
 2. 匹配对应的 skill
 3. 读取完整 skill 文件
 4. 执行工作流
+
+---
+
+## 工作流技能映射
+
+### 视频制作工作流（23 技能）
+| 阶段 | 技能 | 触发词 |
+|------|------|--------|
+| 资料 | baoyu-youtube-transcript | YouTube 下载/提取字幕 |
+| 资料 | baoyu-url-to-markdown | 网页提取/下载网页 |
+| 创意 | brainstorming | 头脑风暴/创意/点子 |
+| 配音 | tts-voice | 转语音/配音/TTS |
+| 素材 | baoyu-image-gen | 生成图片/画图 |
+| 素材 | baoyu-infographic | 信息图/数据图表 |
+| 素材 | baoyu-cover-image | 封面图/头图 |
+| 素材 | baoyu-diagram | 流程图/示意图 |
+| 素材 | baoyu-article-illustrator | 配图/插图 |
+| 素材 | baoyu-image-cards | 信息卡片/金句卡片 |
+| 字幕 | baoyu-translate | 翻译/多语言 |
+| 发布 | baoyu-post-to-wechat | 公众号/微信发布 |
+| 发布 | baoyu-post-to-weibo | 微博发布 |
+| 发布 | baoyu-post-to-x | Twitter/X发布 |
+
+### 内容发布工作流（15 技能）
+| 阶段 | 技能 | 触发词 |
+|------|------|--------|
+| 资料 | baoyu-youtube-transcript | YouTube 下载 |
+| 资料 | baoyu-url-to-markdown | 网页提取 |
+| 创意 | brainstorming | 头脑风暴/创意 |
+| 视觉 | baoyu-cover-image | 封面图 |
+| 视觉 | baoyu-article-illustrator | 配图 |
+| 视觉 | baoyu-infographic | 信息图 |
+| 视觉 | baoyu-image-cards | 卡片 |
+| PPT | baoyu-slide-deck | PPT/幻灯片 |
+| 格式 | baoyu-format-markdown | 格式化/排版 |
+| 格式 | baoyu-markdown-to-html | 转 HTML |
+| 格式 | baoyu-compress-image | 压缩图片 |
+| 发布 | baoyu-post-to-wechat | 公众号 |
+| 发布 | baoyu-post-to-weibo | 微博 |
+| 发布 | baoyu-post-to-x | Twitter |
 
 ---
 

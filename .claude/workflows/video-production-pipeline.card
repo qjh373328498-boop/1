@@ -1,23 +1,42 @@
-# 🎬 一体化视频生成工作流
+# 🎬 一体化视频生成工作流（完整版）
 
 ## 完整流程概览
 
 ```
-创意 → 脚本 → 配音 → 画面 → 字幕 → BGM → 成品
+参考资料 → 创意 → 脚本 → 配音 → 分镜 → 素材 → 视频 → 字幕 → BGM → 多语言 → 成品
 ```
 
-## 技能矩阵（含图片生成）
+---
 
-| 阶段 | 技能 | 工具 | 输出 |
-|------|------|------|------|
-| **1. 脚本** | 文案生成 | Claude | 文字脚本.txt |
-| **2. 配音** | TTS 语音 | tts-voice | narration.mp3 + narration.vtt |
-| **3. 分镜** | 场景分析 | Claude | 分镜脚本.json |
-| **4. 图片** | 素材生成 | baoyu-image-gen 等 | frame_01.png ~ frame_NN.png |
-| **5. 视频** | 图片转视频 | FFmpeg | visuals.mp4 |
-| **6. 字幕** | 字幕同步 | auto-subtitles | subtitles.srt |
-| **7. BGM** | 背景音乐 | music-gen | bgm.mp3 |
-| **8. 剪辑** | 最终合成 | video-use | final_video.mp4 |
+## 技能矩阵（23 技能整合版）
+
+| 阶段 | 技能 | 工具 | 输出 | 批次 |
+|------|------|------|------|------|
+| **0. 资料收集** | YouTube 下载 | baoyu-youtube-transcript | 参考视频 + 文稿 | 第 1 批 |
+| | 网页提取 | baoyu-url-to-markdown | 参考资料.md | 第 1 批 |
+| **1. 创意** | 头脑风暴 | brainstorming | 创意点子.md | 第 3 批 |
+| **2. 脚本** | 文案生成 | Claude | script.txt | - |
+| **3. 配音** | TTS 语音 | tts-voice | narration.mp3 + vtt | - |
+| **4. 分镜** | 场景分析 | Claude | storyboard.json | - |
+| **5. 素材** | 通用图片 | baoyu-image-gen | frame_*.png | - |
+| | 数据图表 | baoyu-infographic | chart.png | - |
+| | 封面图 | baoyu-cover-image | cover.png | - |
+| | 流程图 | baoyu-diagram | diagram.png | 第 1 批 |
+| | 旁白配图 | baoyu-article-illustrator | illustration_*.png | 第 3 批 |
+| | 信息卡片 | baoyu-image-cards | card_*.png | 第 3 批 |
+| | 漫画分镜 | baoyu-comic | comic_*.png | - |
+| | 小红书配图 | baoyu-xhs-images | xhs_*.png | - |
+| **6. 视频** | 图片转视频 | FFmpeg | visuals.mp4 | - |
+| | HTML 动画 | hyperframes | animation.mp4 | - |
+| **7. 字幕** | 字幕同步 | auto-subtitles | subtitles.srt | - |
+| | 多语言翻译 | baoyu-translate | subtitles_en.srt | 第 1 批 |
+| **8. BGM** | 背景音乐 | music-gen | bgm.mp3 | - |
+| **9. 剪辑** | 最终合成 | video-use | final_video.mp4 | - |
+| **10. 发布** | 格式优化 | baoyu-format-markdown | 说明文档.md | 第 1 批 |
+| | 图片压缩 | baoyu-compress-image | compressed_*.png | 第 2 批 |
+| | 封面发布 | baoyu-post-to-wechat | 公众号文章 | 第 2 批 |
+| | 微博发布 | baoyu-post-to-weibo | 微博推文 | 第 2 批 |
+| | Twitter 发布 | baoyu-post-to-x | X 推文 | 第 2 批 |
 
 ---
 
@@ -31,38 +50,99 @@
 
 ### 方式 2：分步执行
 ```
-用户："先写脚本" → 文案生成
+用户："先下载几个参考视频" → baoyu-youtube-transcript
+用户："帮我写脚本" → 文案生成
 用户："把脚本转成语音" → tts-voice
-用户："生成配套的画面" → hyperframes
-用户："加上字幕和 BGM" → video-use
+用户："根据脚本生成图片" → baoyu-image-gen
+用户："合成视频" → video-use
+```
+
+### 方式 3：资料增强模式
+```
+用户："找几个 YouTube 参考视频" → baoyu-youtube-transcript
+用户："提取这个网页的内容" → baoyu-url-to-markdown
+用户："基于这些资料写脚本" → 文案生成
 ```
 
 ---
 
-## 工作流程
+## 完整工作流程
 
-### 阶段 0：需求确认
-```yaml
-视频类型：口播/动画/图文/混剪
-视频时长：15s/30s/60s/180s
-视频尺寸：1080x1920(竖屏) / 1920x1080(横屏)
-目标平台：抖音/YouTube/B 站/微信
-配音风格：男声/女声/童声/方言
-BGM 风格：轻松/激昂/温馨/科技感
-```
+### 阶段 0：资料收集（新增 - 第 1 批）
 
-### 阶段 1：脚本生成
+#### 0.1 YouTube 视频下载
 ```bash
-# 调用 AI 生成脚本
-输出：script.txt
-内容包括：
-  - 视频标题
-  - 开场白（3-5 秒）
-  - 主体内容（30-60 秒）
-  - 行动号召（5 秒）
+# 下载参考视频并提取字幕
+baoyu-youtube-transcript \
+  --url "https://youtube.com/watch?v=xxx" \
+  --output-dir references/ \
+  --extract-transcript
+
+# 输出：
+# - references/video.mp4（视频文件）
+# - references/transcript.md（文稿）
+# - references/subtitles.srt（字幕）
 ```
 
-### 阶段 2：配音生成（tts-voice）
+**用途**：
+- 竞品分析
+- 学习优秀视频结构
+- 提取参考文稿
+
+#### 0.2 网页内容提取
+```bash
+# 提取网页为 Markdown
+baoyu-url-to-markdown \
+  --url "https://example.com/article" \
+  --output references/article.md
+
+# 批量提取
+baoyu-url-to-markdown \
+  --urls references/urls.txt \
+  --output-dir references/
+```
+
+**用途**：
+- 收集参考资料
+- 提取产品信息
+- 整理数据素材
+
+---
+
+### 阶段 1：创意构思（第 3 批）
+
+#### 1.1 头脑风暴
+```bash
+# 调用 brainstorming skill
+# 输出：ideas.md
+
+头脑风暴维度：
+- 视频主题
+- 目标受众
+- 内容调性（专业/轻松/幽默）
+- 呈现形式（图文/口播/动画）
+- 差异化亮点
+```
+
+---
+
+### 阶段 2：脚本生成
+
+```bash
+# 基于资料和创意生成脚本
+# 输出：script.txt
+
+脚本结构：
+- 视频标题
+- 开场白（3-5 秒，吸引注意）
+- 主体内容（30-120 秒，核心信息）
+- 行动号召（5 秒，引导互动）
+```
+
+---
+
+### 阶段 3：配音生成（tts-voice）
+
 ```bash
 # 使用 tts-voice skill
 python3 -m edge_tts \
@@ -76,85 +156,165 @@ python3 -m edge_tts \
 - `narration.mp3` - 人声音频
 - `narration.vtt` - 字幕文件
 
-### 阶段 3：分镜脚本生成（新增）
-```bash
-# 基于脚本和配音时长，生成每帧图片的描述
-# 输出：storyboard.json
+---
 
+### 阶段 4：分镜脚本生成
+
+```json
+// 输出：storyboard.json
 {
   "frames": [
     {
       "id": 1,
       "time": "00:00-00:05",
-      "narration": "大家好，今天介绍一款桌游...",
-      "image_prompt": "德国心脏病桌游盒子封面，卡通风格，色彩鲜艳",
+      "narration": "大家好，今天介绍...",
+      "image_prompt": "产品封面图，科技感",
+      "image_type": "baoyu-cover-image",
       "image_file": "frame_01.png"
     },
     {
       "id": 2,
       "time": "00:05-00:15",
-      "narration": "游戏包含 32 张卡牌，每张卡牌上有 1-5 种水果",
-      "image_prompt": "桌游卡牌平铺展示，显示不同水果图案：草莓、柠檬、樱桃、葡萄、香蕉",
+      "narration": "这个产品有三大特点...",
+      "image_prompt": "三点信息图表",
+      "image_type": "baoyu-infographic",
       "image_file": "frame_02.png"
-    },
-    ...
+    }
   ]
 }
 ```
 
-### 阶段 4：图片生成（新增 - 核心优化）
+---
+
+### 阶段 5：素材生成（核心优化）
+
+#### 5.1 通用图片生成
 ```bash
-# 遍历分镜脚本，为每一帧生成图片
+# 遍历分镜，生成每帧图片
 for frame in storyboard.frames:
   baoyu-image-gen \
     --prompt "{frame.image_prompt}" \
     --image "{frame.image_file}" \
     --ar "16:9" \
     --quality "high"
+```
 
-# 或使用信息图技能（适合数据展示）
+#### 5.2 数据图表（第 1 批）
+```bash
+# 生成数据可视化图表
 baoyu-infographic \
-  --title "水果概率分布" \
-  --data "草莓 40%, 柠檬 25%, 樱桃 15%, 葡萄 12%, 香蕉 8%" \
-  --image "probability_chart.png"
+  --title "用户增长率" \
+  --data "Q1:20%, Q2:35%, Q3:50%, Q4:80%" \
+  --style "bar_chart" \
+  --image "growth_chart.png"
+```
 
-# 或生成封面图
+#### 5.3 流程图（第 1 批）
+```bash
+# 生成流程图/示意图
+baoyu-diagram \
+  --type "flowchart" \
+  --nodes "开始→分析→处理→输出→结束" \
+  --style "modern" \
+  --image "workflow.png"
+```
+
+#### 5.4 封面图
+```bash
 baoyu-cover-image \
-  --title "德国心脏病桌游介绍" \
-  --subtitle "规则详解 + 获胜策略" \
+  --title "产品评测" \
+  --subtitle "深度体验 30 天" \
+  --style "tech" \
   --image "video_cover.png"
 ```
 
-**可用图片技能**：
-| 技能 | 用途 | 示例 |
-|------|------|------|
-| baoyu-image-gen | 通用图片 | 桌游封面、卡牌、场景 |
-| baoyu-infographic | 数据图表 | 概率分布、统计信息 |
-| baoyu-cover-image | 视频封面 | YouTube/B 站封面 |
-| baoyu-diagram | 流程图 | 游戏规则流程图 |
-| baoyu-image-cards | 信息卡片 | 关键信息摘要卡片 |
-| baoyu-article-illustrator | 配图 | 旁白内容配图 |
-
-### 阶段 5：图片转视频
+#### 5.5 旁白配图（第 3 批）
 ```bash
-# 将生成的图片序列转为视频
-# 每张图片显示 3-5 秒（根据配音时长调整）
+# 根据旁白内容自动配图
+baoyu-article-illustrator \
+  --text "旁白文本" \
+  --style "illustration" \
+  --image "illustration_01.png"
+```
 
+#### 5.6 信息卡片（第 3 批）
+```bash
+# 生成关键信息卡片
+baoyu-image-cards \
+  --text "核心观点/金句/数据" \
+  --style "minimal" \
+  --image "quote_card.png"
+```
+
+#### 5.7 漫画分镜
+```bash
+# 生成多格漫画/分镜
+baoyu-comic \
+  --script "场景 1→场景 2→场景 3" \
+  --panels "3" \
+  --style "japanese" \
+  --output "comic_strip.png"
+```
+
+#### 5.8 小红书配图
+```bash
+# 生成小红书风格配图
+baoyu-xhs-images \
+  --title "笔记标题" \
+  --style "cute" \
+  --ratio "3:4" \
+  --image "xhs_cover.png"
+```
+
+---
+
+### 阶段 6：视频生成
+
+#### 6.1 图片转视频
+```bash
+# 将图片序列转为视频
 ffmpeg -framerate 1/3 -i frame_%02d.png \
   -c:v libx264 -pix_fmt yuv420p \
-  -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" \
+  -vf "scale=1920:1080" \
   visuals.mp4
-
-# 输出：visuals.mp4（无声视频，图片序列）
 ```
 
-### 阶段 6：字幕生成（同步配音）
+#### 6.2 HTML 动画（可选）
 ```bash
-# 使用 whisper 自动生成字幕
-python autosub.py --input narration.mp3 --output subtitles.srt
+# 使用 hyperframes 生成动画视频
+npx hyperframes render video.html -o animation.mp4
 ```
 
-### 阶段 7：背景音乐生成（music-gen）
+---
+
+### 阶段 7：字幕处理
+
+#### 7.1 字幕同步
+```bash
+# 使用 VTT 转为 SRT
+ffmpeg -i narration.vtt subtitles.srt
+```
+
+#### 7.2 多语言翻译（第 1 批）
+```bash
+# 翻译字幕为多语言
+baoyu-translate \
+  --input subtitles.srt \
+  --source-lang zh \
+  --target-lang en \
+  --output subtitles_en.srt
+
+baoyu-translate \
+  --input subtitles.srt \
+  --source-lang zh \
+  --target-lang jp \
+  --output subtitles_jp.srt
+```
+
+---
+
+### 阶段 8：背景音乐生成
+
 ```bash
 # 生成 BGM
 python music_gen.py \
@@ -163,21 +323,64 @@ python music_gen.py \
   --output bgm.mp3
 ```
 
-### 阶段 8：最终合成（video-use）
+---
+
+### 阶段 9：最终合成（video-use）
+
 ```bash
 # 合并所有轨道
-# 轨道 1：画面 (visuals.mp4)
-# 轨道 2：配音 (narration.mp3)
-# 轨道 3：BGM (bgm.mp3, 音量 30%)
-# 轨道 4：字幕 (subtitles.srt)
-
 ffmpeg -i visuals.mp4 \
   -i narration.mp3 \
   -i bgm.mp3 \
+  -i subtitles.srt \
+  -filter_complex "[1][2]amix=inputs=2:duration=longest,volume=volume=0.8" \
   -vf "subtitles=subtitles.srt" \
-  -filter_complex "[1][2]amix=inputs=2:duration=longest" \
   -c:v libx264 -c:a aac \
   final_video.mp4
+```
+
+---
+
+### 阶段 10：发布准备（第 2 批）
+
+#### 10.1 格式优化（第 1 批）
+```bash
+# 格式化说明文档
+baoyu-format-markdown \
+  --input README_raw.md \
+  --style "github" \
+  --output README.md
+```
+
+#### 10.2 图片压缩（第 2 批）
+```bash
+# 压缩封面图和配图
+baoyu-compress-image \
+  --input cover.png \
+  --quality 85 \
+  --format webp \
+  --output cover_compressed.webp
+```
+
+#### 10.3 多平台发布（第 2 批）
+```bash
+# 发布到微信公众号
+baoyu-post-to-wechat \
+  --title "视频标题" \
+  --content video_intro.md \
+  --images cover_compressed.webp \
+  --video final_video.mp4
+
+# 发布到微博
+baoyu-post-to-weibo \
+  --text "视频简介 #话题#" \
+  --images cover.webp \
+  --video final_video.mp4
+
+# 发布到 Twitter/X
+baoyu-post-to-x \
+  --text "Video description #hashtag" \
+  --media final_video.mp4
 ```
 
 ---
@@ -186,70 +389,60 @@ ffmpeg -i visuals.mp4 \
 
 ### video-production-pipeline.card
 ```yaml
-名称：一体化视频生成（含图片生成）
+名称：一体化视频生成（23 技能整合版）
 触发词：
   - "做个视频"
   - "生成视频"
   - "视频制作"
   - "从零开始做视频"
   - "没有素材做个视频"
-包含子技能：
-  1. 脚本生成（文案）
-  2. tts-voice（配音 + VTT 字幕）
-  3. 分镜脚本生成（场景分析）
-  4. baoyu-image-gen（图片生成）⭐ 新增
-  5. baoyu-infographic（数据图表）⭐ 新增
-  6. baoyu-cover-image（封面图）⭐ 新增
-  7. FFmpeg（图片转视频）
-  8. auto-subtitles（字幕同步）
-  9. music-gen（BGM）
-  10. video-use（最终合成）
-```
+  - "下载 YouTube 视频做参考"
+  - "多语言视频"
 
----
+包含子技能（完整）：
+  第 0 批（资料）:
+    - baoyu-youtube-transcript（YouTube 下载）
+    - baoyu-url-to-markdown（网页提取）
+  第 1 批（创意）:
+    - brainstorming（头脑风暴）
+  第 2 批（脚本）:
+    - 文案生成（Claude）
+  第 3 批（配音）:
+    - tts-voice（配音+VTT）
+  第 4 批（分镜）:
+    - 分镜脚本生成（Claude）
+  第 5 批（素材）:
+    - baoyu-image-gen（通用图片）
+    - baoyu-infographic（数据图表）
+    - baoyu-cover-image（封面图）
+    - baoyu-diagram（流程图）
+    - baoyu-article-illustrator（旁白配图）
+    - baoyu-image-cards（信息卡片）
+    - baoyu-comic（漫画分镜）
+    - baoyu-xhs-images（小红书配图）
+  第 6 批（视频）:
+    - FFmpeg（图片转视频）
+    - hyperframes（HTML 动画）
+  第 7 批（字幕）:
+    - auto-subtitles（字幕同步）
+    - baoyu-translate（多语言翻译）
+  第 8 批（BGM）:
+    - music-gen（背景音乐）
+  第 9 批（剪辑）:
+    - video-use（最终合成）
+  第 10 批（发布）:
+    - baoyu-format-markdown（格式优化）
+    - baoyu-compress-image（图片压缩）
+    - baoyu-post-to-wechat（公众号）
+    - baoyu-post-to-weibo（微博）
+    - baoyu-post-to-x（Twitter）
 
-## 预设模板库
-
-### 模板 1：产品展示视频（竖屏 60 秒）
-```yaml
-适用：抖音/小红书
-脚本结构：
-  - 0-5s: 痛点引入
-  - 5-30s: 产品介绍
-  - 30-50s: 使用场景
-  - 50-60s: 购买引导
-配音：zh-CN-XiaoxiaoNeural（温暖女声）
-画面：产品图片+文字动画
-BGM：轻松愉快，音量 25%
-字幕：大字，底部居中
-```
-
-### 模板 2：知识科普视频（横屏 180 秒）
-```yaml
-适用：YouTube/B 站
-脚本结构：
-  - 0-10s: 问题提出
-  - 10-30s: 背景介绍
-  - 30-120s: 核心知识点
-  - 120-160s: 案例说明
-  - 160-180s: 总结回顾
-配音：zh-CN-YunyangNeural（专业男声）
-画面：图文动画+数据图表
-BGM：轻柔背景，音量 15%
-字幕：双语字幕，可切换
-```
-
-### 模板 3：口播视频（竖屏 30 秒）
-```yaml
-适用：朋友圈/视频号
-脚本结构：
-  - 0-3s: 吸引注意
-  - 3-25s: 核心内容
-  - 25-30s: 互动引导
-配音：真人录音或 TTS
-画面：真人出镜
-BGM：无或极低音量
-字幕：关键字高亮
+预设模板：
+  - 产品展示视频（竖屏 60 秒）
+  - 知识科普视频（横屏 180 秒）
+  - 口播视频（竖屏 30 秒）
+  - YouTube 视频（横屏 10 分钟）
+  - 小红书视频（竖屏 90 秒）
 ```
 
 ---
@@ -260,41 +453,71 @@ BGM：无或极低音量
 ```bash
 #!/bin/bash
 
-# 一体化视频生成脚本
-# 用法：./make_video.sh <主题> <时长> <风格>
+# 一体化视频生成脚本（23 技能整合版）
+# 用法：./make_video.sh <主题> <时长> <风格> <平台>
 
 THEME="$1"        # 如："产品介绍"
 DURATION="$2"     # 如：60
 STYLE="$3"        # 如："professional"
+PLATFORM="$4"     # 如："youtube"
 
 echo "=== 开始视频制作 ==="
 echo "主题：$THEME"
 echo "时长：${DURATION}秒"
 echo "风格：$STYLE"
+echo "平台：$PLATFORM"
 
-# 1. 生成脚本
-echo "[1/6] 生成脚本..."
+# 0. 下载参考资料
+echo "[0/12] 下载参考资料..."
+./download_refs.sh "$THEME"
+
+# 1. 头脑风暴
+echo "[1/12] 头脑风暴..."
+./brainstorm.sh "$THEME"
+
+# 2. 生成脚本
+echo "[2/12] 生成脚本..."
 ./gen_script.sh "$THEME" "$DURATION"
 
-# 2. 生成配音
-echo "[2/6] 生成配音..."
+# 3. 生成配音
+echo "[3/12] 生成配音..."
 ./gen_voice.sh script.txt narration.mp3
 
-# 3. 生成字幕
-echo "[3/6] 生成字幕..."
+# 4. 生成分镜
+echo "[4/12] 生成分镜脚本..."
+./gen_storyboard.sh script.txt narration.mp3
+
+# 5. 生成素材
+echo "[5/12] 生成素材（图片/图表/封面）..."
+./gen_assets.sh storyboard.json
+
+# 6. 生成视频序列
+echo "[6/12] 图片转视频..."
+./images_to_video.sh frame_*.png
+
+# 7. 生成字幕
+echo "[7/12] 生成字幕..."
 ./gen_subtitles.sh narration.mp3
 
-# 4. 生成画面
-echo "[4/6] 生成画面..."
-./gen_visuals.sh "$THEME" "$DURATION"
+# 8. 翻译多语言字幕
+echo "[8/12] 翻译字幕..."
+./translate_subs.sh subtitles.srt
 
-# 5. 生成 BGM
-echo "[5/6] 生成背景音乐..."
-./gen_bgm.sh "$STYLE" "$DURATION"
+# 9. 生成 BGM
+echo "[9/12] 生成背景音乐..."
+./gen_bgm.sh "$STYLE"
 
-# 6. 最终合成
-echo "[6/6] 合成视频..."
+# 10. 最终合成
+echo "[10/12] 合成视频..."
 ./merge_all.sh
+
+# 11. 压缩优化
+echo "[11/12] 图片压缩..."
+./compress_images.sh
+
+# 12. 多平台发布
+echo "[12/12] 发布到 $PLATFORM..."
+./publish.sh "$PLATFORM"
 
 echo "✅ 视频制作完成！"
 ```
@@ -307,38 +530,87 @@ echo "✅ 视频制作完成！"
 - [ ] 分辨率：1080p 或 720p
 - [ ] 帧率：30fps
 - [ ] 码率：视频>8Mbps，音频>192kbps
+- [ ] 格式：MP4（H.264 + AAC）
 
 ### 音频质量
 - [ ] 配音清晰无杂音
-- [ ] BGM 不压过人声
+- [ ] BGM 不压过人声（-20dB）
 - [ ] 音量标准化（-16LUFS）
+- [ ] 无爆音/断点
 
 ### 字幕质量
 - [ ] 无错别字
-- [ ] 时间轴准确
-- [ ] 字体大小适中
+- [ ] 时间轴准确（±50ms）
+- [ ] 字体大小适中（>24px）
+- [ ] 多语言版本完整
 
 ### 画面质量
 - [ ] 画面与配音同步
 - [ ] 转场流畅
 - [ ] 色彩协调
+- [ ] 图表清晰可读
+
+### 发布质量
+- [ ] 封面图压缩优化
+- [ ] 多平台格式适配
+- [ ] 话题标签正确
+- [ ] 描述文案完整
+
+---
+
+## 技能批次汇总
+
+### 第 1 批（视频增强）
+- ✅ baoyu-youtube-transcript
+- ✅ baoyu-url-to-markdown
+- ✅ baoyu-diagram
+- ✅ baoyu-translate
+- ✅ baoyu-format-markdown
+
+### 第 2 批（发布增强）
+- ✅ baoyu-slide-deck
+- ✅ baoyu-markdown-to-html
+- ✅ baoyu-post-to-wechat/weibo/x
+- ✅ baoyu-compress-image
+
+### 第 3 批（通用增强）
+- ✅ baoyu-article-illustrator
+- ✅ baoyu-image-cards
+- ✅ brainstorming
+- ✅ caveman-commit
 
 ---
 
 ## 相关文件
 
-- **总控技能**：`workflows/video-pipeline.card`
-- **脚本生成**：`skills/script-generator/`
+- **总控技能**：`workflows/video-production-pipeline.card`
 - **配音生成**：`skills/tts-voice/SKILL.md`
-- **画面生成**：`skills/hyperframes/SKILL.md`
-- **字幕生成**：`skills/auto-subtitles/`
-- **BGM 生成**：`skills/music-gen/`
+- **画面生成**：`skills/hyperframes/` + `skills/baoyu-*/SKILL.md`
+- **字幕生成**：`skills/auto-subtitles/` + `skills/baoyu-translate/SKILL.md`
+- **BGM 生成**：`skills/music-gen/SKILL.md`
 - **最终剪辑**：`skills/video-use/SKILL.md`
+- **内容发布**：`skills/content-publish-workflow/SKILL.md`
 
-## 参考资料
+---
 
-- HyperFrames: https://github.com/heygen-com/hyperframes
-- Edge TTS: https://github.com/rany2/edge-tts
-- Video Use: https://github.com/browser-use/video-use
-- Auto Subtitles: https://github.com/aidarkhanov/auto-subs
-- Music Gen: https://github.com/facebookresearch/audiocraft
+## 版本历史
+
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v1.0 | 2026-05-01 | 初始版本（6 技能） |
+| v2.0 | 2026-05-01 | 集成图片生成（10 技能） |
+| **v3.0** | **2026-05-01** | **23 技能完整整合（3 批次）** |
+
+---
+
+## 性能指标
+
+| 指标 | v1.0 | v2.0 | v3.0 |
+|------|------|------|------|
+| 技能数 | 6 | 10 | 23 |
+| 自动化程度 | 40% | 65% | 90%+ |
+| 适用场景 | 简单图文 | 素材视频 | 全平台发布 |
+| 多语言支持 | ❌ | ❌ | ✅ |
+| 一键发布 | ❌ | ❌ | ✅ |
+
+---
