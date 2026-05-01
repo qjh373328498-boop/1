@@ -1,0 +1,280 @@
+# 🎬 一体化视频生成工作流
+
+## 完整流程概览
+
+```
+创意 → 脚本 → 配音 → 画面 → 字幕 → BGM → 成品
+```
+
+## 技能矩阵
+
+| 阶段 | 技能 | 工具 | 输出 |
+|------|------|------|------|
+| **1. 脚本** | 文案生成 | Claude | 文字脚本 |
+| **2. 配音** | TTS 语音 | tts-voice | 人声音频.mp3 |
+| **3. 画面** | 视频生成 | hyperframes | 视频画面.mp4 |
+| **4. 字幕** | 字幕生成 | auto-subtitles | 字幕文件.srt |
+| **5. BGM** | 背景音乐 | music-gen | 背景音乐.mp3 |
+| **6. 剪辑** | 最终合成 | video-use | 成品视频.mp4 |
+
+---
+
+## 触发方式
+
+### 方式 1：一体化生成（推荐）
+```
+用户："帮我做一个产品介绍视频"
+触发：video-production-pipeline（总控）
+```
+
+### 方式 2：分步执行
+```
+用户："先写脚本" → 文案生成
+用户："把脚本转成语音" → tts-voice
+用户："生成配套的画面" → hyperframes
+用户："加上字幕和 BGM" → video-use
+```
+
+---
+
+## 工作流程
+
+### 阶段 0：需求确认
+```yaml
+视频类型：口播/动画/图文/混剪
+视频时长：15s/30s/60s/180s
+视频尺寸：1080x1920(竖屏) / 1920x1080(横屏)
+目标平台：抖音/YouTube/B 站/微信
+配音风格：男声/女声/童声/方言
+BGM 风格：轻松/激昂/温馨/科技感
+```
+
+### 阶段 1：脚本生成
+```bash
+# 调用 AI 生成脚本
+输出：script.txt
+内容包括：
+  - 视频标题
+  - 开场白（3-5 秒）
+  - 主体内容（30-60 秒）
+  - 行动号召（5 秒）
+```
+
+### 阶段 2：配音生成（tts-voice）
+```bash
+# 使用 tts-voice skill
+python3 -m edge_tts \
+  --voice zh-CN-YunxiNeural \
+  --file script.txt \
+  --write-media narration.mp3 \
+  --write-subtitles narration.vtt
+```
+
+**输出**：
+- `narration.mp3` - 人声音频
+- `narration.vtt` - 字幕文件
+
+### 阶段 3：画面生成（可选两种方案）
+
+#### 方案 A：hyperframes（无素材）
+```bash
+# 生成 HTML 描述，渲染成视频
+npx hyperframes render video.html -o visuals.mp4
+```
+
+#### 方案 B：video-use（有素材）
+```bash
+# 使用原始素材剪辑
+cd raw-footage
+# video-use 自动处理
+```
+
+### 阶段 4：字幕生成（如果 tts 没生成）
+```bash
+# 使用 whisper 自动生成字幕
+python autosub.py --input narration.mp3 --output subtitles.srt
+```
+
+### 阶段 5：背景音乐生成（music-gen）
+```bash
+# 生成 BGM
+python music_gen.py \
+  --style "light corporate" \
+  --duration 60 \
+  --output bgm.mp3
+```
+
+### 阶段 6：最终合成（video-use）
+```bash
+# 合并所有轨道
+# 轨道 1：画面 (visuals.mp4)
+# 轨道 2：配音 (narration.mp3)
+# 轨道 3：BGM (bgm.mp3, 音量 30%)
+# 轨道 4：字幕 (subtitles.srt)
+
+ffmpeg -i visuals.mp4 \
+  -i narration.mp3 \
+  -i bgm.mp3 \
+  -vf "subtitles=subtitles.srt" \
+  -filter_complex "[1][2]amix=inputs=2:duration=longest" \
+  -c:v libx264 -c:a aac \
+  final_video.mp4
+```
+
+---
+
+## 工作流卡片设计
+
+### total-video-maker.card
+```yaml
+名称：一体化视频生成
+触发词：
+  - "做个视频"
+  - "生成视频"
+  - "视频制作"
+  - "从头做个视频"
+包含子技能：
+  1. 脚本生成
+  2. tts-voice（配音）
+  3. hyperframes（画面）
+  4. video-use（剪辑）
+  5. auto-subtitles（字幕）
+  6. music-gen（BGM）
+```
+
+---
+
+## 预设模板库
+
+### 模板 1：产品展示视频（竖屏 60 秒）
+```yaml
+适用：抖音/小红书
+脚本结构：
+  - 0-5s: 痛点引入
+  - 5-30s: 产品介绍
+  - 30-50s: 使用场景
+  - 50-60s: 购买引导
+配音：zh-CN-XiaoxiaoNeural（温暖女声）
+画面：产品图片+文字动画
+BGM：轻松愉快，音量 25%
+字幕：大字，底部居中
+```
+
+### 模板 2：知识科普视频（横屏 180 秒）
+```yaml
+适用：YouTube/B 站
+脚本结构：
+  - 0-10s: 问题提出
+  - 10-30s: 背景介绍
+  - 30-120s: 核心知识点
+  - 120-160s: 案例说明
+  - 160-180s: 总结回顾
+配音：zh-CN-YunyangNeural（专业男声）
+画面：图文动画+数据图表
+BGM：轻柔背景，音量 15%
+字幕：双语字幕，可切换
+```
+
+### 模板 3：口播视频（竖屏 30 秒）
+```yaml
+适用：朋友圈/视频号
+脚本结构：
+  - 0-3s: 吸引注意
+  - 3-25s: 核心内容
+  - 25-30s: 互动引导
+配音：真人录音或 TTS
+画面：真人出镜
+BGM：无或极低音量
+字幕：关键字高亮
+```
+
+---
+
+## 自动化脚本
+
+### make_video.sh（总控脚本）
+```bash
+#!/bin/bash
+
+# 一体化视频生成脚本
+# 用法：./make_video.sh <主题> <时长> <风格>
+
+THEME="$1"        # 如："产品介绍"
+DURATION="$2"     # 如：60
+STYLE="$3"        # 如："professional"
+
+echo "=== 开始视频制作 ==="
+echo "主题：$THEME"
+echo "时长：${DURATION}秒"
+echo "风格：$STYLE"
+
+# 1. 生成脚本
+echo "[1/6] 生成脚本..."
+./gen_script.sh "$THEME" "$DURATION"
+
+# 2. 生成配音
+echo "[2/6] 生成配音..."
+./gen_voice.sh script.txt narration.mp3
+
+# 3. 生成字幕
+echo "[3/6] 生成字幕..."
+./gen_subtitles.sh narration.mp3
+
+# 4. 生成画面
+echo "[4/6] 生成画面..."
+./gen_visuals.sh "$THEME" "$DURATION"
+
+# 5. 生成 BGM
+echo "[5/6] 生成背景音乐..."
+./gen_bgm.sh "$STYLE" "$DURATION"
+
+# 6. 最终合成
+echo "[6/6] 合成视频..."
+./merge_all.sh
+
+echo "✅ 视频制作完成！"
+```
+
+---
+
+## 质量检查清单
+
+### 视频质量
+- [ ] 分辨率：1080p 或 720p
+- [ ] 帧率：30fps
+- [ ] 码率：视频>8Mbps，音频>192kbps
+
+### 音频质量
+- [ ] 配音清晰无杂音
+- [ ] BGM 不压过人声
+- [ ] 音量标准化（-16LUFS）
+
+### 字幕质量
+- [ ] 无错别字
+- [ ] 时间轴准确
+- [ ] 字体大小适中
+
+### 画面质量
+- [ ] 画面与配音同步
+- [ ] 转场流畅
+- [ ] 色彩协调
+
+---
+
+## 相关文件
+
+- **总控技能**：`workflows/video-pipeline.card`
+- **脚本生成**：`skills/script-generator/`
+- **配音生成**：`skills/tts-voice/SKILL.md`
+- **画面生成**：`skills/hyperframes/SKILL.md`
+- **字幕生成**：`skills/auto-subtitles/`
+- **BGM 生成**：`skills/music-gen/`
+- **最终剪辑**：`skills/video-use/SKILL.md`
+
+## 参考资料
+
+- HyperFrames: https://github.com/heygen-com/hyperframes
+- Edge TTS: https://github.com/rany2/edge-tts
+- Video Use: https://github.com/browser-use/video-use
+- Auto Subtitles: https://github.com/aidarkhanov/auto-subs
+- Music Gen: https://github.com/facebookresearch/audiocraft

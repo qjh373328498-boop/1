@@ -1,0 +1,271 @@
+# BGM 背景音乐生成工作流
+
+## 触发关键词
+- `背景音乐` / `BGM` / `配乐`
+- `生成音乐` / `创作音乐` / `作曲`
+- `免版权音乐` / `无版权`
+- `音效` / `背景音`
+
+## 置信度判断
+- ≥80%: 用户明确要求生成/添加背景音乐
+- 60-79%: 提到音乐但不确定用途
+- <60%: 不触发
+
+## 使用场景
+当你需要为视频、播客、 presentation 添加背景音乐时使用。
+
+## 解决方案对比
+
+### 方案 1：AI 生成（推荐）
+**工具**：Suno AI / Udio / MusicGen
+
+优点：
+- 完全原创，无版权问题
+- 可定制风格、时长、情绪
+- 无需乐理知识
+
+缺点：
+- 需要网络连接
+- 生成需要等待时间
+
+### 方案 2：免版权音乐库
+**来源**：
+- YouTube Audio Library
+- FreePD
+- Bensound
+- NCS (No Copyright Sounds)
+
+优点：
+- 立即可用
+- 质量稳定
+
+缺点：
+- 可能与他人撞车
+- 部分需要署名
+
+### 方案 3：本地生成（MusicGen）
+**工具**：Meta MusicGen
+
+优点：
+- 本地运行，隐私保护
+- 一次性安装，免费使用
+
+缺点：
+- 需要显卡（4GB+ 显存）
+- 安装相对复杂
+
+---
+
+## 工作流程
+
+### 方式 1：使用 Suno API（免安装）
+```bash
+# 生成背景音乐
+curl -X POST https://api.suno.ai/v1/generate \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "prompt": "light corporate background music, uplifting, 60 seconds",
+    "style": "instrumental",
+    "duration": 60
+  }'
+
+# 输出：music.mp3
+```
+
+### 方式 2：使用 MusicGen 本地生成
+```bash
+# 1. 安装（一次性）
+pip install audiocraft
+
+# 2. 生成音乐
+python gen_music.py \
+  --prompt "relaxing lofi hip hop beat" \
+  --duration 30 \
+  --output bgm.mp3
+```
+
+### 方式 3：从免版权库下载
+```
+1. 访问 YouTube Audio Library
+2. 筛选风格（如：Cinematic/Pop/Rock）
+3. 下载 MP3 文件
+4. 用于视频
+```
+
+---
+
+## 音乐风格推荐
+
+### 企业/产品介绍
+| 风格 | 描述 | BPM |
+|------|------|-----|
+| Corporate | 专业、积极向上 | 90-120 |
+| Uplifting | 鼓舞人心、正能量 | 100-130 |
+| Technology | 科技感、未来感 | 110-140 |
+
+### Vlog/日常
+| 风格 | 描述 | BPM |
+|------|------|-----|
+| Acoustic | 轻松吉他 | 80-100 |
+| Pop | 轻快流行 | 100-120 |
+| Chill | 悠闲放松 | 70-90 |
+
+### 知识科普
+| 风格 | 描述 | BPM |
+|------|------|-----|
+| Ambient | 氛围背景 | 60-80 |
+| Documentary | 纪录片风格 | 80-100 |
+| Minimal | 极简主义 | 70-90 |
+
+### 短视频
+| 风格 | 描述 | BPM |
+|------|------|-----|
+| Trending | 热门神曲 | 120-140 |
+| Funky | 放克节奏 | 100-120 |
+| Electronic | 电子音乐 | 128-140 |
+
+---
+
+## 实用脚本
+
+### gen_bgm.sh（快速生成）
+```bash
+#!/bin/bash
+
+# 生成 BGM 脚本
+# 用法：./gen_bgm.sh <风格> <时长>
+
+STYLE="$1"        # light/corporate/chill/upbeat
+DURATION="$2"     # 秒数，默认 60
+
+if [ -z "$STYLE" ]; then
+    echo "用法：$0 <风格> [时长]"
+    echo "风格选项：light, corporate, chill, upbeat, cinematic"
+    exit 1
+fi
+
+DURATION="${2:-60}"
+
+echo "正在生成 $STYLE 风格的背景音乐，时长${DURATION}秒..."
+
+# 使用 MusicGen 生成
+python3 << EOF
+from audiocraft.models import MusicGen
+from audiocraft.data.audio import audio_write
+
+model = MusicGen.get_pretrained('facebook/musicgen-small')
+model.set_generation_params(duration=$DURATION)
+
+descriptions = ['$STYLE background music, instrumental']
+wav = model.generate(descriptions)
+
+for idx, one_wav in enumerate(wav):
+    audio_write(f'bgm_{STYLE}', one_wav.cpu(), model.sample_rate, strategy="loudness")
+EOF
+
+echo "✅ 生成完成：bgm_${STYLE}.wav"
+```
+
+---
+
+## 音量平衡建议
+
+| 用途 | BGM 音量 | 人声音量 |
+|------|---------|---------|
+| 口播视频 | -25dB | 0dB |
+| 纯音乐 | 0dB | - |
+| 背景旁白 | -20dB | 0dB |
+| 宣传片 | -15dB | 0dB |
+
+FFmpeg 调整音量：
+```bash
+# 降低 BGM 音量到 30%
+ffmpeg -i bgm.mp3 -filter:a "volume=0.3" bgm_quiet.mp3
+
+# 混合人声和 BGM
+ffmpeg -i narration.mp3 -i bgm.mp3 \
+  -filter_complex "[0:0],[1:0]amix=inputs=2:duration=longest" \
+  output.mp3
+```
+
+---
+
+## 版权注意事项
+
+### ✅ 可以使用
+- AI 生成的音乐（Suno/MusicGen）
+- 标明 CC0 的音乐
+- YouTube Audio Library 免费音乐
+- 购买版权的音乐
+
+### ❌ 避免使用
+- 流行歌曲（未经授权）
+- 未知来源的音乐
+- 有版权保护的音乐
+
+### 署名要求
+- CC BY：需要署名作者
+- CC BY-NC：非商业用途，需署名
+- CC0 / Public Domain：无需署名
+
+---
+
+## 使用示例
+
+### 示例 1：产品介绍视频
+```
+用户：为这个产品视频配个背景音乐，科技感一点
+执行：
+  - 风格：Technology
+  - 时长：60 秒
+  - 音量：-20dB（有人声旁白）
+输出：bgm_technology_60s.mp3
+```
+
+### 示例 2：Vlog 日常
+```
+用户：找一首轻松的 BGM，适合旅行 vlog
+执行：
+  - 风格：Acoustic/Chill
+  - 时长：180 秒
+  - 音量：-15dB
+输出：bgm_travel_vlog.mp3
+```
+
+### 示例 3：知识科普
+```
+用户：生成一个适合科普视频的背景音乐
+执行：
+  - 风格：Ambient/Documentary
+  - 时长：300 秒
+  - 音量：-25dB（确保人声清晰）
+输出：bgm_documentary_5min.mp3
+```
+
+---
+
+## 依赖要求
+
+- Python 3.8+
+- audiocraft（MusicGen）
+- FFmpeg（已安装）
+
+---
+
+## 在线工具推荐
+
+1. **Suno AI** - https://suno.ai
+2. **Udio** - https://udio.com
+3. **Soundraw** - https://soundraw.io
+4. **AIVA** - https://aiva.ai
+
+---
+
+## 相关文件
+- 工作流卡片：`/workspace/.claude/workflows/music-gen.card`
+- 脚本目录：`/workspace/.claude/skills/music-gen/`
+
+## 参考资料
+- MusicGen: https://github.com/facebookresearch/audiocraft
+- Suno API: https://suno.com
+- YouTube Audio Library: https://www.youtube.com/audiolibrary

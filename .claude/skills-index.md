@@ -98,6 +98,10 @@
 | git-sync | 工具 | `skills/git-sync.card` |
 | video-use | 视频处理 | `workflows/video-use.card` |
 | hyperframes | 视频处理 | `workflows/hyperframes.card` |
+| tts-voice | 音频处理 | `workflows/tts-voice.card` |
+| auto-subtitles | 音频处理 | `workflows/auto-subtitles.card` |
+| music-gen | 音频处理 | `workflows/music-gen.card` |
+| video-production-pipeline | 一体化视频 | `workflows/video-production-pipeline.card` |
 
 ### 工作流技能
 | 技能名 | 文件路径 |

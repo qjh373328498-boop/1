@@ -1,0 +1,204 @@
+# 自动字幕生成工作流
+
+## 触发关键词
+- `加字幕` / `生成字幕` / `字幕文件`
+- `SRT` / `ASS` / `VTT`
+- `语音转文字` / `听写` / `转录`
+- `视频字幕` / `自动字幕`
+
+## 置信度判断
+- ≥80%: 用户明确要求为视频/音频生成字幕
+- 60-79%: 提到字幕但不确定来源
+- <60%: 不触发
+
+## 使用场景
+当你有视频/音频文件，需要自动生成字幕时使用。
+
+## 工作流程
+
+### 方式 1：已有配音文件（推荐）
+如果已经用 tts-voice 生成了配音，会同时生成 `.vtt` 字幕文件。
+
+```bash
+# TTS 生成时同步生成字幕
+python3 -m edge_tts \
+  --voice zh-CN-YunxiNeural \
+  --text "你好世界" \
+  --write-media audio.mp3 \
+  --write-subtitles subtitle.vtt
+```
+
+### 方式 2：已有音频/视频文件
+使用 whisper 进行语音识别。
+
+```bash
+# 安装 whisper（一次性）
+pip install openai-whisper
+
+# 生成字幕
+whisper audio.mp3 --model base --output_format srt
+```
+
+### 方式 3：从视频提取
+```bash
+# 1. 提取音频
+ffmpeg -i video.mp4 -vn -acodec libmp3lame audio.mp3
+
+# 2. 生成字幕
+whisper audio.mp3 --model base --output_format srt
+
+# 3. 合并字幕到视频
+ffmpeg -i video.mp4 -vf "subtitles=subtitle.srt" video_with_subs.mp4
+```
+
+## 字幕格式
+
+### SRT 格式（最通用）
+```srt
+1
+00:00:00,000 --> 00:00:03,500
+你好，欢迎观看我们的产品介绍
+
+2
+00:00:03,500 --> 00:00:07,000
+这是一款革命性的产品
+```
+
+### VTT 格式（Web 友好）
+```vtt
+WEBVTT
+
+00:00:00.000 --> 00:00:03.500
+你好，欢迎观看我们的产品介绍
+
+00:00:03.500 --> 00:00:07.000
+这是一款革命性的产品
+```
+
+### ASS 格式（高级样式）
+```ass
+[Script Info]
+Title: 视频字幕
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour
+Style: Default,Microsoft YaHei,48,&H00FFFFFF
+
+[Events]
+Format: Layer,Start,End,Style,Text
+Dialogue: 0,0:00:00.00,0:00:03.50,Default,你好，欢迎观看
+```
+
+## 模型选择
+
+| 模型 | 大小 | 速度 | 准确率 | 适用场景 |
+|------|------|------|--------|----------|
+| tiny | 39M | 最快 | 一般 | 快速测试 |
+| base | 74M | 快 | 良好 | 日常使用 |
+| small | 244M | 中 | 很好 | 正式内容 |
+| medium | 769M | 慢 | 优秀 | 专业内容 |
+| large | 1550M | 最慢 | 最佳 | 高质量要求 |
+
+## 多语言支持
+
+Whisper 支持 99 种语言，包括：
+- 中文（简体/繁体）
+- 英文
+- 日文
+- 韩文
+- 法语、德语、西班牙语等
+
+自动检测语言：
+```bash
+whisper audio.mp3 --model base
+```
+
+指定语言：
+```bash
+whisper audio.mp3 --model base --language zh
+```
+
+## 双语字幕生成
+
+```bash
+# 生成原始字幕
+whisper audio.mp3 --model base --output_format srt
+
+# 翻译成双语（使用翻译 API 或 AI）
+# 输出格式：
+1
+00:00:00,000 --> 00:00:03,500
+你好，欢迎观看
+Hello, welcome to watch
+```
+
+## 字幕优化技巧
+
+### 1. 时间轴调整
+```bash
+# 提前 0.5 秒
+ffmpeg -i subtitle.srt -itsoffset 00:00:00.500 subtitle_adjusted.srt
+```
+
+### 2. 样式定制
+```css
+/* WebVTT 样式 */
+::cue {
+  background-color: rgba(0,0,0,0.7);
+  color: white;
+  font-family: "Microsoft YaHei";
+  font-size: 24px;
+}
+```
+
+### 3. 断句优化
+- 每行不超过 15 个中文字
+- 单条字幕显示 2-5 秒
+- 按语义断句，不要拆散词组
+
+## 使用示例
+
+### 示例 1：课程视频加字幕
+```
+用户：给这个教学视频加上中文字幕
+输入：tutorial.mp4
+输出：tutorial.srt + tutorial_with_subs.mp4
+```
+
+### 示例 2：访谈转录
+```
+用户：把这段访谈转成文字
+输入：interview.mp3
+输出：interview.txt + interview.srt
+```
+
+### 示例 3：多语言字幕
+```
+用户：生成中英双语字幕
+输入：video.mp4
+输出：bilingual.srt (中文 + 英文)
+```
+
+## 依赖要求
+
+- FFmpeg（已安装）
+- Python 3.8+
+- openai-whisper（可选）
+
+## 注意事项
+
+1. 本地运行需要 GPU 加速（推荐使用 CPU 模式）
+2. 长视频建议分段处理（每段<10 分钟）
+3. 专业术语可能需要手动校正
+4. 背景音乐较大时会影响识别准确率
+
+## 相关文件
+- 工作流卡片：`/workspace/.claude/workflows/auto-subtitles.card`
+- 脚本目录：`/workspace/.claude/skills/auto-subtitles/`
+
+## 参考资料
+- Whisper 官方：https://github.com/openai/whisper
+- Edge TTS 字幕：https://github.com/rany2/edge-tts
