@@ -1,3 +1,10 @@
 node_modules/
 package-lock.json
 package.json
+
+# 视频输出文件
+桌游视频输出/
+*.mp4
+*.wav
+*.mov
+video-output/
