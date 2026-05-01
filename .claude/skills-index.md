@@ -56,6 +56,13 @@
 |--------|--------|----------|--------|----------|
 | weekly-planning | 周计划/计划/日程安排/周回顾 | "制定计划" | 中 | `skills/weekly-planning-workflow/SKILL.md` |
 
+### 🎬 视频处理类
+
+| 技能名 | 关键词 | 触发示例 | 置信度 | 文件路径 |
+|--------|--------|----------|--------|----------|
+| video-use | 剪辑视频/有素材/去掉废话 | "帮我把这个视频剪一下" | 高 | `workflows/video-use.card` |
+| hyperframes | 生成视频/没有素材/动画视频 | "从零开始做个视频" | 高 | `workflows/hyperframes.card` |
+
 ### 🔧 工具类
 
 | 技能名 | 关键词 | 触发示例 | 置信度 | 文件路径 |
@@ -83,6 +90,8 @@
 | knowledge-manage-workflow | 知识管理 | `skills/knowledge-manage-workflow/SKILL.md` |
 | feature-design | 项目管理 | `skills/feature-design/SKILL.md` |
 | git-sync | 工具 | `skills/git-sync.card` |
+| video-use | 视频处理 | `workflows/video-use.card` |
+| hyperframes | 视频处理 | `workflows/hyperframes.card` |
 
 ### 工作流技能
 | 技能名 | 文件路径 |

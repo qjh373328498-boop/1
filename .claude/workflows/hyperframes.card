@@ -1,0 +1,112 @@
+# HyperFrames 工作流 - 无素材时生成视频
+
+## 触发关键词
+- `生成视频` / `创建视频` / `制作视频`
+- `没有素材` / `从零开始`
+- `动画视频` / `图文视频` / `数据可视化`
+- `写 HTML 生成视频` / `代码生成视频`
+
+## 置信度判断
+- ≥80%: 用户明确表示要从头生成视频
+- 60-79%: 提到视频但不确定是否有素材
+- <60%: 不触发
+
+## 使用场景
+当你没有原始视频素材，需要通过代码/动画/图文生成视频时使用。
+
+## 工作流程
+
+### 1. 确认视频需求
+- 视频类型：动画/图文/数据可视化/产品展示
+- 视频时长
+- 视频尺寸：1080p/720p，横屏/竖屏
+
+### 2. 检查环境配置
+```bash
+# 检查 Node.js 版本（需要>=22）
+node -v
+
+# 检查 HyperFrames 是否安装
+ls /workspace/.claude/skills/hyperframes
+
+# 检查 FFmpeg
+ffmpeg -version
+```
+
+### 3. 创建视频项目
+```bash
+cd <目标目录>
+mkdir -p hyperframes-project
+cd hyperframes-project
+```
+
+### 4. 生成 HTML 描述文件
+
+AI 编写 HTML 代码描述视频内容，例如：
+
+```html
+<!DOCTYPE html>
+<html data-composition-id="my-video" data-duration="10000">
+<head>
+  <style>
+    .title { font-size: 48px; color: white; }
+  </style>
+</head>
+<body data-background="black">
+  <div class="title" data-start="0" data-duration="3000">
+    视频标题
+  </div>
+  <div class="content" data-start="3000" data-duration="7000">
+    视频内容
+  </div>
+</body>
+</html>
+```
+
+### 5. 预览和渲染
+```bash
+# 预览（Web 界面）
+npx hyperframes preview video.html
+
+# 渲染成 MP4
+npx hyperframes render video.html -o output.mp4
+```
+
+### 6. 输出结果
+- 输出格式：MP4/MOV/WebM
+- 输出位置：输出目录
+
+## 核心优势
+
+1. **HTML 原生**：用 HTML+CSS+JS 描述视频，AI 友好
+2. **程序化控制**：支持 GSAP 动画时间线、Three.js 3D 渲染
+3. **实时预览**：Web 界面即时查看效果
+4. **精确控制**：毫秒级时间轴控制
+5. **无需剪辑技能**：代码迭代替代拖拽
+
+## 依赖要求
+
+- Node.js >= 22（已安装 v22）
+- FFmpeg（已安装）
+- Bun/Node.js 运行时（已安装）
+
+## 支持的特性
+
+- HTML/CSS 样式
+- GSAP 动画时间线
+- Lottie 动画
+- Canvas 绘图
+- Three.js 3D 渲染
+- 视频轨道混合
+
+## 注意事项
+
+1. 适合：图文视频、动画、数据可视化、产品展示
+2. 不适合：需要真实人物/实景拍摄的视频
+3. 需要基本的 HTML/CSS 知识（AI 会自动生成）
+4. 渲染时间取决于视频长度和复杂度
+
+## 相关文件
+- Skill 目录：`/workspace/.claude/skills/hyperframes/`
+- 官方文档：https://hyperframes.heygen.com
+- GitHub：https://github.com/heygen-com/hyperframes
