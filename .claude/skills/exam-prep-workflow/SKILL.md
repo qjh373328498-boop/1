@@ -66,6 +66,7 @@ arguments:
 - 课程笔记（Markdown 文件）
 - 教材 PDF（调用 pdf skill）
 - 作业题目（Word/PDF）
+- YouTube 教程视频（调用 baoyu-youtube-transcript）★新增
 ```
 
 **1.2 读取知识库相关资料**
@@ -75,6 +76,27 @@ arguments:
 - 知识库/02-学习资料/02-考试复习/
 - 作业（论文或笔记）/{课程名}/
 ```
+
+**1.3 YouTube 教程视频下载（新增）**
+```bash
+# 下载 YouTube 教学视频并提取字幕
+baoyu-youtube-transcript \
+  'https://youtube.com/watch?v=xxx' \
+  --languages zh,en \
+  --chapters \
+  --output-dir 复习资料/{课程名}/视频教程/
+
+# 输出：
+# - 视频教程/transcript.md（带章节的字幕）
+# - 视频教程/cover.jpg（视频封面）
+# - 视频教程/meta.json（视频元数据）
+```
+
+**用途**：
+- 下载名校公开课
+- 提取知识点讲解视频
+- 获取实操演示视频
+- 多语言字幕学习
 
 ## 阶段 2：知识点提取
 
@@ -414,6 +436,7 @@ ROE = 净利润 ÷ 平均净资产
 | baoyu-format-markdown | 格式化知识点 |
 | baoyu-diagram | 生成思维导图 |
 | baoyu-infographic | 数据图表生成 |
+| **baoyu-youtube-transcript** | **YouTube 教程视频下载 + 字幕提取** ★新增 |
 
 ## 使用示例
 

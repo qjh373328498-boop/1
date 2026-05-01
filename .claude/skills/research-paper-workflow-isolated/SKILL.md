@@ -77,12 +77,28 @@ description: 学术研究/论文写作工作流（隔离知识库模式）。默
 - ❌ **禁止**引用个人学业档案索引
 
 **1.1 网页资料**
+```bash
+# 提取网页文献为 Markdown
+baoyu-url-to-markdown \
+  --url "https://example.com/article" \
+  --output 文献资料/{主题}/article.md
+
+# 批量提取参考文献
+baoyu-url-to-markdown \
+  --urls references.txt \
+  --output-dir 文献资料/{主题}/
+
+# 输出：
+# - article.md（干净的 Markdown）
+# - article.html（原始 HTML 快照）
+# - meta.json（元数据：标题/作者/日期）
 ```
-调用：baoyu-url-to-markdown
-- 读取 URL 内容
-- 转换为干净 Markdown
-- 保存 HTML 快照
-```
+
+**用途**：
+- 提取官方博客文章
+- 下载技术文档
+- 保存网页文献
+- 批量整理参考文献
 
 **1.2 YouTube 视频**
 ```

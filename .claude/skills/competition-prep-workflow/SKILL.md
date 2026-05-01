@@ -74,6 +74,7 @@ arguments:
 - 比赛官网规则
 - 往届获奖作品
 - 知识库中的备赛资料
+- YouTube 比赛讲解视频 ★新增
 ```
 
 **1.2 提取关键信息**
@@ -102,6 +103,22 @@ arguments:
 - [ ] 路演 PPT（{X} 分钟）
 - [ ] 辅助材料（视频/原型等）
 - [ ] 报名表
+```
+
+**1.3 YouTube 比赛教程下载（新增）**
+```bash
+# 下载比赛讲解视频
+baoyu-youtube-transcript \
+  'https://youtube.com/watch?v=xxx' \
+  --languages zh,en \
+  --chapters \
+  --output-dir 比赛资料/{比赛名}/参考资料/
+
+# 用途：
+# - 往届获奖者经验分享
+# - 评委规则解读视频
+# - 获奖作品展示
+# - 备赛技巧讲解
 ```
 
 ## 阶段 2：备赛计划制定
@@ -421,6 +438,7 @@ baoyu-cover-image：生成封面图
 | baoyu-infographic | 图表生成 |
 | baoyu-diagram | 流程图 |
 | knowledge-manage-workflow | 整理比赛资料 |
+| **baoyu-youtube-transcript** | **YouTube 比赛讲解视频下载** ★新增 |
 
 ## 使用示例
 
