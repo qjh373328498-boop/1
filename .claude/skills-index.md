@@ -1,9 +1,9 @@
 # Skills 索引表
 
-> 版本：v1.1  
+> 版本：v1.2  
 > 最后更新：2026-05-01  
 > 说明：按需加载技能索引，常驻仅 ~500 tokens  
-> 23 技能整合：已整合到视频/内容工作流
+> 23+2 技能整合：已整合 baoyu-imagine 和 baoyu-comic 到视频工作流
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## 工作流技能映射
 
-### 视频制作工作流（23 技能）
+### 视频制作工作流（23+2 技能）
 | 阶段 | 技能 | 触发词 |
 |------|------|--------|
 | 资料 | baoyu-youtube-transcript | YouTube 下载/提取字幕 |
@@ -26,6 +26,8 @@
 | 创意 | brainstorming | 头脑风暴/创意/点子 |
 | 配音 | tts-voice | 转语音/配音/TTS |
 | 素材 | baoyu-image-gen | 生成图片/画图 |
+| 素材 | baoyu-imagine | 高质量图片/精细生成 | **整合** |
+| 素材 | baoyu-comic | 漫画分镜/故事性视频 | **整合** |
 | 素材 | baoyu-infographic | 信息图/数据图表 |
 | 素材 | baoyu-cover-image | 封面图/头图 |
 | 素材 | baoyu-diagram | 流程图/示意图 |

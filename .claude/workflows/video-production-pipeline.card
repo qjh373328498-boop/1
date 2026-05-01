@@ -18,13 +18,14 @@
 | **2. 脚本** | 文案生成 | Claude | script.txt | - |
 | **3. 配音** | TTS 语音 | tts-voice | narration.mp3 + vtt | - |
 | **4. 分镜** | 场景分析 | Claude | storyboard.json | - |
+| | 漫画分镜 | baoyu-comic | comic_*.png | 整合 |
 | **5. 素材** | 通用图片 | baoyu-image-gen | frame_*.png | - |
+| | 高质量图片 | baoyu-imagine | frame_*.png | 整合 |
 | | 数据图表 | baoyu-infographic | chart.png | - |
 | | 封面图 | baoyu-cover-image | cover.png | - |
 | | 流程图 | baoyu-diagram | diagram.png | 第 1 批 |
 | | 旁白配图 | baoyu-article-illustrator | illustration_*.png | 第 3 批 |
 | | 信息卡片 | baoyu-image-cards | card_*.png | 第 3 批 |
-| | 漫画分镜 | baoyu-comic | comic_*.png | - |
 | | 小红书配图 | baoyu-xhs-images | xhs_*.png | - |
 | **6. 视频** | 图片转视频 | FFmpeg | visuals.mp4 | - |
 | | HTML 动画 | hyperframes | animation.mp4 | - |
@@ -199,6 +200,21 @@ for frame in storyboard.frames:
     --quality "high"
 ```
 
+#### 5.2 高质量图片（整合）
+```bash
+# 使用 baoyu-imagine 生成更高质量封面/插图
+baoyu-imagine \
+  --prompt "高质量封面图，科技感，细节丰富" \
+  --image "cover_hq.png" \
+  --ar "16:9" \
+  --quality "2k"
+
+# 批量生成（适用于已完成分镜脚本的场景）
+baoyu-imagine \
+  --batchfile prompts/batch.json \
+  --jobs 6
+```
+
 #### 5.2 数据图表（第 1 批）
 ```bash
 # 生成数据可视化图表
@@ -246,14 +262,31 @@ baoyu-image-cards \
   --image "quote_card.png"
 ```
 
-#### 5.7 漫画分镜
+#### 5.7 漫画分镜（整合）
 ```bash
-# 生成多格漫画/分镜
+# 使用 baoyu-comic 生成故事性视频分镜/漫画式叙事
+# 适用于：故事性视频、教程漫画、知识科普视频
+
+# 基础用法 - 简单分镜
 baoyu-comic \
-  --script "场景 1→场景 2→场景 3" \
-  --panels "3" \
-  --style "japanese" \
-  --output "comic_strip.png"
+  --storyboard "场景 1: 开场→场景 2: 问题→场景 3: 解决方案" \
+  --art "manga" \
+  --tone "warm" \
+  --layout "standard" \
+  --output-dir "comic-storyboard/"
+
+# 完整工作流 - 知识漫画
+baoyu-comic \
+  --source "script.md" \
+  --art "ligne-claire" \
+  --tone "neutral" \
+  --layout "cinematic" \
+  --prompts-only  # 仅生成提示文件，便于审查
+
+# 批量生成页面（基于已生成的提示文件）
+baoyu-comic \
+  --images-only \
+  --comic-dir "comic-storyboard/"
 ```
 
 #### 5.8 小红书配图
@@ -578,6 +611,10 @@ echo "✅ 视频制作完成！"
 - ✅ baoyu-image-cards
 - ✅ brainstorming
 - ✅ caveman-commit
+
+### 整合技能（无需批次）
+- ✅ baoyu-imagine（替换 baoyu-image-gen，高质量图片）
+- ✅ baoyu-comic（故事性视频分镜）
 
 ---
 
