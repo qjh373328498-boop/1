@@ -523,7 +523,7 @@ echo "✅ 内容创作与发布完成！"
 - `baoyu-slide-deck` - PPT 生成
 
 ### 图片技能
-- `baoyu-image-gen` - 通用图片
+- `baoyu-imagine` - 图片生成（含原 baoyu-image-gen）
 - `baoyu-article-illustrator` - 配图
 - `baoyu-infographic` - 信息图
 - `baoyu-image-cards` - 卡片

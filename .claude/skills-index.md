@@ -44,8 +44,7 @@
 | baoyu-diagram | `skills/baoyu-diagram/SKILL.md` |
 | baoyu-article-illustrator | `skills/baoyu-article-illustrator/SKILL.md` |
 | baoyu-image-cards | `skills/baoyu-image-cards/SKILL.md` |
-| baoyu-image-gen | `skills/baoyu-image-gen/SKILL.md` |
-| baoyu-imagine | `skills/baoyu-imagine/SKILL.md` |
+| baoyu-imagine | `skills/baoyu-imagine/SKILL.md` （含原 baoyu-image-gen） |
 | baoyu-comic | `skills/baoyu-comic/SKILL.md` |
 | baoyu-infographic | `skills/baoyu-infographic/SKILL.md` |
 | baoyu-cover-image | `skills/baoyu-cover-image/SKILL.md` |

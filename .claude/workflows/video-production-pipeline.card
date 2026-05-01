@@ -19,8 +19,7 @@
 | **3. 配音** | TTS 语音 | tts-voice | narration.mp3 + vtt | - |
 | **4. 分镜** | 场景分析 | Claude | storyboard.json | - |
 | | 漫画分镜 | baoyu-comic | comic_*.png | 整合 |
-| **5. 素材** | 通用图片 | baoyu-image-gen | frame_*.png | - |
-| | 高质量图片 | baoyu-imagine | frame_*.png | 整合 |
+| **5. 素材** | 图片生成 | baoyu-imagine | frame_*.png | 整合/第 4 批 |
 | | 数据图表 | baoyu-infographic | chart.png | - |
 | | 封面图 | baoyu-cover-image | cover.png | - |
 | | 流程图 | baoyu-diagram | diagram.png | 第 1 批 |
@@ -189,20 +188,17 @@ python3 -m edge_tts \
 
 ### 阶段 5：素材生成（核心优化）
 
-#### 5.1 通用图片生成
+#### 5.1 图片生成（整合）
 ```bash
-# 遍历分镜，生成每帧图片
-for frame in storyboard.frames:
-  baoyu-image-gen \
-    --prompt "{frame.image_prompt}" \
-    --image "{frame.image_file}" \
-    --ar "16:9" \
-    --quality "high"
-```
+# 使用 baoyu-imagine 生成所有图片
+# 普通图片
+baoyu-imagine \
+  --prompt "{frame.image_prompt}" \
+  --image "frame_001.png" \
+  --ar "16:9" \
+  --quality "high"
 
-#### 5.2 高质量图片（整合）
-```bash
-# 使用 baoyu-imagine 生成更高质量封面/插图
+# 高质量图片（封面/插图）
 baoyu-imagine \
   --prompt "高质量封面图，科技感，细节丰富" \
   --image "cover_hq.png" \
@@ -445,7 +441,7 @@ baoyu-post-to-x \
   第 4 批（分镜）:
     - 分镜脚本生成（Claude）
   第 5 批（素材）:
-    - baoyu-image-gen（通用图片）
+    - baoyu-imagine（图片生成，含原 baoyu-image-gen）
     - baoyu-infographic（数据图表）
     - baoyu-cover-image（封面图）
     - baoyu-diagram（流程图）
@@ -612,17 +608,13 @@ echo "✅ 视频制作完成！"
 - ✅ brainstorming
 - ✅ caveman-commit
 
-### 整合技能（无需批次）
-- ✅ baoyu-imagine（替换 baoyu-image-gen，高质量图片）
-- ✅ baoyu-comic（故事性视频分镜）
-
 ---
 
 ## 相关文件
 
 - **总控技能**：`workflows/video-production-pipeline.card`
 - **配音生成**：`skills/tts-voice/SKILL.md`
-- **画面生成**：`skills/hyperframes/` + `skills/baoyu-*/SKILL.md`
+- **画面生成**：`skills/hyperframes/` + `skills/baoyu-imagine/` + `skills/baoyu-*/SKILL.md`
 - **字幕生成**：`skills/auto-subtitles/` + `skills/baoyu-translate/SKILL.md`
 - **BGM 生成**：`skills/music-gen/SKILL.md`
 - **最终剪辑**：`skills/video-use/SKILL.md`

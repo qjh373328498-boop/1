@@ -148,14 +148,10 @@
 - 封面图、头图、缩略图
 ```
 
-### baoyu-image-gen
-```
-- 生成图片、画图、AI 画图
-```
-
 ### baoyu-imagine
 ```
 - 高质量图片、精细生成、AI 绘画、精美图片
+- （原 baoyu-image-gen 已合并到此技能）
 ```
 
 ### baoyu-comic
