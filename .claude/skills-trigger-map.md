@@ -19,6 +19,56 @@
 1. **优先级**：精确匹配 > 模糊匹配 > 上下文推断
 2. **多关键词匹配**：选择权重最高的
 3. **无匹配**：不触发任何 skill，正常对话
+4. **同步要求**：修改时必须同步更新 CLAUDE.md 核心触发词（高频词）
+
+---
+
+## 与 CLAUDE.md 的同步
+
+### 核心触发词（常驻）
+
+以下技能的触发词已精简到 `CLAUDE.md` 常驻（~60 词）：
+
+| 技能 | 核心触发词数 | 完整触发词数 |
+|------|-------------|-------------|
+| exam-prep | 5 | 8 |
+| competition-prep | 5 | 10 |
+| research-paper-isolated | 6 | 12 |
+| research-paper-with-kb | 3 | 5 |
+| literature-search | 4 | 8 |
+| data-analysis | 6 | 15 |
+| weekly-planning | 5 | 10 |
+| knowledge-manage | 4 | 8 |
+| feature-design | 4 | 8 |
+| video-use | 4 | 12 |
+| hyperframes | 4 | 10 |
+| tts-voice | 5 | 15 |
+| music-gen | 3 | 8 |
+| git-sync | 3 | 5 |
+
+### 何时加载本文件
+
+```
+1. 模糊匹配（核心触发词匹配但置信度 60-79%）
+2. 触发失败（核心触发词未匹配但用户意图明显）
+3. 同步检查（./skills.sh check-sync）
+4. 测试调试（./skills.sh test）
+5. 用户请求（查看完整触发词列表）
+```
+
+### 同步规则
+
+**高频触发词**（日均≥10 次）→ 添加到 CLAUDE.md  
+**低频触发词**（日均<10 次）→ 保留在本文件  
+
+**修改流程**：
+1. 修改 CLAUDE.md 核心触发词
+2. 同步修改 skills-trigger-map.md 完整映射
+3. 更新两个文件的版本号
+4. 运行同步检查：`./skills.sh check-sync`
+5. 测试：`./skills.sh test "<触发词>"`
+
+详见：`trigger-sync-checklist.md`
 
 ---
 

@@ -51,13 +51,17 @@ git add . && git commit -m "auto: <描述>" && git push
 
 ### 触发规则
 
-- **Level 1**：精确匹配 → 直接触发（置信度≥80%）
-- **Level 2**：模糊匹配 → 告知用户后触发（置信度 60-79%）
-- **Level 3**：低置信度 → 询问确认（置信度 40-59%）
-- **否定词**：不想/不要/不需要/别 → 不触发
+**匹配流程**：
+```
+1. 用户输入 → 匹配 CLAUDE.md 核心触发词
+2. 精确匹配 (≥80%) → 直接触发 skill
+3. 模糊匹配 (60-79%) → 自动加载 skills-trigger-map.md 精确匹配
+4. 低置信度 (<40%) → 询问确认
+5. 否定词 (不想/不要/不需要/别) → 不触发
+```
 
-**完整映射表**：`skills-trigger-map.md`（按需加载）  
-**技能索引**：`skills-index.md`
+**核心触发词**：14 技能，~60 词，常驻内存  
+**完整映射表**：按需加载（模糊匹配/触发失败/用户请求时）
 
 ---
 
@@ -108,7 +112,46 @@ git add . && git commit && git push
 | `skills-trigger-map.md` | 完整触发词映射 | 按需 | ~3,000 |
 | `skills-config.json` | 配置参数 | 按需 | ~200 |
 | `MEMORY.md` | 用户偏好记忆 | 常驻 | ~800 |
+| `trigger-test.md` | 触发词测试工具 | 按需 | - |
+| `trigger-sync-checklist.md` | 同步检查清单 | 按需 | - |
 | **常驻总计** | - | - | **~2,100** |
+
+---
+
+## 副作用缓解措施
+
+### 1. 核心词遗漏 → 自动加载完整映射表
+
+```
+当核心触发词匹配但置信度<80% 时：
+1. 自动加载 skills-trigger-map.md
+2. 进行精确匹配
+3. 匹配成功后触发 skill
+```
+
+### 2. 映射表不同步 → 强制同步检查
+
+```
+每次修改触发词时：
+1. 必须同时更新 CLAUDE.md 和 skills-trigger-map.md
+2. 必须更新两个文件的版本号
+3. 必须运行 ./skills.sh check-sync
+4. 必须测试新触发词
+```
+
+详见：`trigger-sync-checklist.md`
+
+### 3. 触发失败难调试 → 测试工具 + 日志
+
+```
+调试命令：
+- ./skills.sh test "<输入>" - 测试单个输入
+- ./skills.sh test-batch test-cases.md - 批量测试
+- ./skills.sh check-sync - 检查同步状态
+- export SKILL_DEBUG=1 - 启用调试日志
+```
+
+详见：`trigger-test.md`
 
 ---
 
