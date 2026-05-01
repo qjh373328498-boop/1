@@ -91,7 +91,7 @@ git add . && git commit -m "auto: <描述>" && git push
 5. 否定词 (不想/不要/不需要/别) → 不触发
 ```
 
-**L2 扩展触发词**：78 技能，~500 词，存储于 `skills-trigger-map.md`  
+**L2 扩展触发词**：77 技能，~500 词，存储于 `skills-trigger-map.md`  
 **加载时机**：置信度 50-79% 时按需加载
 
 ---
