@@ -263,7 +263,22 @@ ffmpeg -i narration.mp3 -i bgm.mp3 \
 
 ## 相关文件
 - 工作流卡片：`/workspace/.claude/workflows/music-gen.card`
+- 主脚本：`/workspace/.claude/scripts/gen_music.sh`
 - 脚本目录：`/workspace/.claude/skills/music-gen/`
+
+## 快速开始
+```bash
+cd /workspace/.claude/scripts
+
+# 单首生成
+./gen_music.sh --prompt "light corporate background" --duration 60
+
+# 批量生成
+./gen_music.sh --batch music-batch.example.json
+
+# 使用 MusicGen 本地生成
+./gen_music.sh --prompt "piano music" --method musicgen
+```
 
 ## 参考资料
 - MusicGen: https://github.com/facebookresearch/audiocraft

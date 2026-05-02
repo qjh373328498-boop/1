@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "light corporate background music, uplifting, positive",
+    "duration": 60,
+    "style": "instrumental"
+  },
+  {
+    "prompt": "electronic dance music, energetic, upbeat",
+    "duration": 90,
+    "style": "electronic"
+  },
+  {
+    "prompt": "calm piano background music, relaxing",
+    "duration": 120,
+    "style": "classical"
+  },
+  {
+    "prompt": "happy ukulele acoustic guitar, cheerful",
+    "duration": 60,
+    "style": "acoustic"
+  }
+]
