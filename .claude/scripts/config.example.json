@@ -1,12 +1,19 @@
 {
-  "theme": "AI 视频制作教程",
-  "duration": 60,
+  "theme": "横屏视频示例",
+  "duration": 180,
   "voice": "zh-CN-YunxiNeural",
-  "width": 1280,
-  "height": 720,
+  "_resolution_note": "标准横屏 16:9 预设",
+  "width": 1920,
+  "height": 1080,
+  "_other_presets": {
+    "HD": {"width": 1280, "height": 720},
+    "FHD": {"width": 1920, "height": 1080},
+    "QHD": {"width": 2560, "height": 1440},
+    "4K": {"width": 3840, "height": 2160},
+    "超宽 21:9": {"width": 2560, "height": 1080}
+  },
   "crf": 23,
   "audio-bitrate": "192k",
   "with-bgm": false,
-  "bgm-file": "",
   "quality-check": true
 }
