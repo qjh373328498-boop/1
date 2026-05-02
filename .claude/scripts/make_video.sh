@@ -363,44 +363,49 @@ step6_merge_video() {
         print_warning "未检测到配音，使用默认时长 60 秒"
     fi
     
-    # 计算每张图片显示时长
+    # 获取图片列表
     image_count=$(ls -1 scaled/*.png 2>/dev/null | wc -l)
     if [ "$image_count" -eq 0 ]; then
         print_error "没有找到图片文件"
         exit 1
     fi
     
-    frame_duration=$(echo "scale=1; $audio_duration / $image_count" | bc)
+    # 计算每张图片显示时长
+    frame_duration=$(awk "BEGIN {printf \"%.1f\", $audio_duration / $image_count}")
     echo "📊 图片数量：$image_count"
     echo "📊 每张图片显示：${frame_duration}秒"
     
-    # 生成 FFmpeg 输入参数
-    input_args=""
-    filter_inputs=""
-    for i in $(seq 1 $image_count); do
-        img=$(ls scaled/*.png | sed -n "${i}p")
-        if [ -n "$img" ]; then
-            input_args="$input_args -loop 1 -t $frame_duration -i $img "
-            filter_inputs="${filter_inputs}[${i}:v]"
-        fi
+    # 创建 concat 列表文件
+    concat_file="$OUTPUT_DIR/concat_list.txt"
+    > "$concat_file"
+    
+    for img in scaled/*.png; do
+        [ -f "$img" ] || continue
+        echo "file '$img'" >> "$concat_file"
+        echo "duration $frame_duration" >> "$concat_file"
     done
+    
+    # 最后一个文件（不重复）
+    if [ "$image_count" -gt 0 ]; then
+        last_img=$(ls scaled/*.png | tail -1)
+        echo "file '$last_img'" >> "$concat_file"
+    fi
     
     # 合成视频
     if [ -f "narration.mp3" ]; then
-        ffmpeg -y \
-            $input_args \
+        echo "🎵 使用配音合成..."
+        ffmpeg -y -f concat -safe 0 -i "$concat_file" \
             -i narration.mp3 \
-            -filter_complex "${filter_inputs}concat=n=${image_count}:v=1:a=0[outv]" \
-            -map "[outv]" -map ${image_count}:a \
-            -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 192k \
-            -shortest final.mp4 2>&1 | tail -5
-    else
-        ffmpeg -y \
-            $input_args \
-            -filter_complex "${filter_inputs}concat=n=${image_count}:v=1[outv]" \
-            -map "[outv]" \
             -c:v libx264 -preset fast -crf 23 \
-            -t $audio_duration final.mp4 2>&1 | tail -5
+            -c:a aac -b:a 192k \
+            -pix_fmt yuv420p \
+            -shortest final.mp4 2>&1 | tail -10
+    else
+        echo "🎵 无配音，生成静音视频..."
+        ffmpeg -y -f concat -safe 0 -i "$concat_file" \
+            -c:v libx264 -preset fast -crf 23 \
+            -pix_fmt yuv420p \
+            -t $audio_duration final.mp4 2>&1 | tail -10
     fi
     
     if [ -f "final.mp4" ]; then
@@ -412,6 +417,8 @@ step6_merge_video() {
         echo "  时长：${duration}s"
     else
         print_error "视频合成失败"
+        echo "Concat 文件内容:"
+        cat "$concat_file"
         exit 1
     fi
     
