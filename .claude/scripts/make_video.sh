@@ -43,15 +43,6 @@ NC='\033[0m' # No Color
 
 # ==================== 日志功能 ====================
 
-init_logging() {
-    LOG_FILE="$OUTPUT_DIR/make_video.log"
-    echo "=== 视频生成日志 ===" > "$LOG_FILE"
-    echo "开始时间：$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
-    echo "主题：${THEME:-N/A}" >> "$LOG_FILE"
-    echo "输出目录：$OUTPUT_DIR" >> "$LOG_FILE"
-    echo "---" >> "$LOG_FILE"
-}
-
 log() {
     local level="$1"
     local message="$2"
@@ -83,22 +74,30 @@ print_header() {
     echo -e "${BLUE}=========================================${NC}"
     echo -e "${BLUE}  🎬 $1${NC}"
     echo -e "${BLUE}=========================================${NC}"
-    log_info "$1"
+    if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
+        log_info "$1"
+    fi
 }
 
 print_step() {
     echo -e "${GREEN}[✓] $1${NC}"
-    log_info "$1"
+    if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
+        log_info "$1"
+    fi
 }
 
 print_warning() {
     echo -e "${YELLOW}⚠️  $1${NC}"
-    log "WARN" "$1"
+    if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
+        log "WARN" "$1"
+    fi
 }
 
 print_error() {
     echo -e "${RED}✗ $1${NC}"
-    log_error "$1"
+    if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
+        log_error "$1"
+    fi
 }
 
 # 进度显示函数
@@ -285,8 +284,13 @@ validate_args() {
     mkdir -p "$OUTPUT_DIR/images"
     mkdir -p "$OUTPUT_DIR/scaled"
     
-    # 初始化日志
-    init_logging
+    # 初始化日志（必须在 OUTPUT_DIR 设置后）
+    LOG_FILE="$OUTPUT_DIR/make_video.log"
+    echo "=== 视频生成日志 ===" > "$LOG_FILE"
+    echo "开始时间：$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
+    echo "主题：${THEME:-N/A}" >> "$LOG_FILE"
+    echo "输出目录：$OUTPUT_DIR" >> "$LOG_FILE"
+    echo "---" >> "$LOG_FILE"
 }
 
 # ==================== 核心步骤 ====================
@@ -698,8 +702,10 @@ main() {
     echo ""
     
     # 记录结束时间
-    echo "---" >> "$LOG_FILE"
-    echo "结束时间：$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
+    if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
+        echo "---" >> "$LOG_FILE"
+        echo "结束时间：$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
+    fi
 }
 
 main "$@"
