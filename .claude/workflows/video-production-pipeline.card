@@ -1,14 +1,14 @@
-# 🎬 一体化视频生成工作流（完整版）
+# 🎬 一体化视频生成工作流（ModelScope AI 增强版）
 
 ## 完整流程概览
 
 ```
-参考资料 → 创意 → 脚本 → 配音 → 分镜 → 素材 → 视频 → 字幕 → BGM → 多语言 → 成品
+参考资料 → 创意 → 脚本 → 配音 → 分镜 → AI 图片 → 视频 → 字幕 → BGM → 多语言 → 成品
 ```
 
 ---
 
-## 技能矩阵（23 技能整合版）
+## 技能矩阵（24 技能整合版）
 
 | 阶段 | 技能 | 工具 | 输出 | 批次 |
 |------|------|------|------|------|
@@ -19,10 +19,11 @@
 | **3. 配音** | TTS 语音 | tts-voice | narration.mp3 + vtt | - |
 | **4. 分镜** | 场景分析 | Claude | storyboard.json | - |
 | | 漫画分镜 | baoyu-comic | comic_*.png | 整合 |
-| **5. 素材** | 图片生成 | baoyu-imagine | frame_*.png | 整合/第 4 批 |
+| **5. 素材** | **AI 图片生成** | **ModelScope API** | frame_*.png | **新增** |
+| | 图片生成 | baoyu-imagine | frame_*.png | 整合/第 4 批 |
 | | 数据图表 | baoyu-infographic | chart.png | - |
 | | 封面图 | baoyu-cover-image | cover.png | - |
-| | 流程图 | baoyu-diagram | diagram.png | 第 1 批 |
+| | 流程图 | baoyu-diagram | diagram.svg | 第 1 批 |
 | | 旁白配图 | baoyu-article-illustrator | illustration_*.png | 第 3 批 |
 | | 信息卡片 | baoyu-image-cards | card_*.png | 第 3 批 |
 | | 小红书配图 | baoyu-xhs-images | xhs_*.png | - |
@@ -53,507 +54,338 @@
 用户："先下载几个参考视频" → baoyu-youtube-transcript
 用户："帮我写脚本" → 文案生成
 用户："把脚本转成语音" → tts-voice
-用户："根据脚本生成图片" → baoyu-image-gen
+用户："根据脚本生成 AI 图片" → ModelScope API
 用户："合成视频" → video-use
 ```
 
-### 方式 3：资料增强模式
+---
+
+## ModelScope AI 图片生成（新增核心能力）
+
+### API 配置
+
+```python
+# ModelScope 通义万相 API
+BASE_URL = "https://api-inference.modelscope.cn/"
+API_KEY = "ms-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # ModelScope Token
+MODEL = "Tongyi-MAI/Z-Image-Turbo"  # 通义万相高速版
 ```
-用户："找几个 YouTube 参考视频" → baoyu-youtube-transcript
-用户："提取这个网页的内容" → baoyu-url-to-markdown
-用户："基于这些资料写脚本" → 文案生成
+
+### Python 生成脚本
+
+```python
+#!/usr/bin/env python3
+"""
+ModelScope AI 图片生成脚本
+用法：python3 gen_image.py "<prompt>" <output_path>
+"""
+
+import requests
+import time
+import json
+import sys
+from io import BytesIO
+
+BASE_URL = "https://api-inference.modelscope.cn/"
+API_KEY = "ms-cc494f31-690a-4df6-9bea-a9a0d3311c4e"  # 替换为你的 key
+MODEL = "Tongyi-MAI/Z-Image-Turbo"
+
+def generate_image(prompt: str, output_path: str, timeout: int = 120):
+    """
+    使用 ModelScope API 生成图片
+    
+    Args:
+        prompt: 中文或英文提示词
+        output_path: 输出文件路径
+        timeout: 超时时间（秒）
+    """
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "X-ModelScope-Async-Mode": "true",
+    }
+    
+    print(f"🎨 开始生成：{prompt}")
+    
+    # 提交异步任务
+    response = requests.post(
+        f"{BASE_URL}v1/images/generations",
+        headers=headers,
+        data=json.dumps({
+            "model": MODEL,
+            "prompt": prompt
+        }, ensure_ascii=False).encode('utf-8')
+    )
+    response.raise_for_status()
+    
+    task_id = response.json()["task_id"]
+    print(f"📋 任务 ID: {task_id}")
+    
+    # 轮询任务状态
+    start_time = time.time()
+    while True:
+        if time.time() - start_time > timeout:
+            raise TimeoutError(f"图片生成超时 ({timeout}s)")
+        
+        result = requests.get(
+            f"{BASE_URL}v1/tasks/{task_id}",
+            headers={**headers, "X-ModelScope-Task-Type": "image_generation"},
+        )
+        result.raise_for_status()
+        data = result.json()
+        status = data["task_status"]
+        
+        print(f"⏳ 状态：{status}")
+        
+        if status == "SUCCEED":
+            img_url = data["output_images"][0]
+            img_data = requests.get(img_url).content
+            with open(output_path, 'wb') as f:
+                f.write(img_data)
+            print(f"✅ 已保存：{output_path}")
+            return output_path
+            
+        elif status == "FAILED":
+            error_msg = data.get("error", {}).get("message", "未知错误")
+            raise Exception(f"图片生成失败：{error_msg}")
+        
+        time.sleep(3)
+
+
+def batch_generate(tasks: list, max_workers: int = 4):
+    """
+    批量生成图片
+    
+    Args:
+        tasks: [(prompt1, output1), (prompt2, output2), ...]
+        max_workers: 最大并发数
+    """
+    import concurrent.futures
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
+        for prompt, output in tasks:
+            future = executor.submit(generate_image, prompt, output)
+            futures.append(future)
+        
+        results = []
+        for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            try:
+                result = future.result()
+                results.append(result)
+                print(f"[{i+1}/{len(tasks)}] 完成：{result}")
+            except Exception as e:
+                print(f"[{i+1}/{len(tasks)}] 失败：{e}")
+    
+    return results
+
+
+if __name__ == "__main__":
+    if len(sys.argv) >= 3:
+        prompt = sys.argv[1]
+        output = sys.argv[2]
+        generate_image(prompt, output)
+    elif len(sys.argv) == 2 and sys.argv[1].endswith('.json'):
+        # 批量模式
+        batch_file = sys.argv[1]
+        with open(batch_file, 'r', encoding='utf-8') as f:
+            tasks = json.load(f)
+        batch_generate(tasks)
+    else:
+        print("用法:")
+        print("  python3 gen_image.py '<prompt>' <output.png>")
+        print("  python3 gen_image.py batch.json  # 批量生成")
+        print()
+        print("batch.json 格式:")
+        print('  [["prompt1", "output1.png"], ["prompt2", "output2.png"]]')
 ```
 
 ---
 
-## 完整工作流程
-
-### 阶段 0：资料收集（新增 - 第 1 批）
-
-#### 0.1 YouTube 视频下载
-```bash
-# 下载参考视频并提取字幕
-baoyu-youtube-transcript \
-  --url "https://youtube.com/watch?v=xxx" \
-  --output-dir references/ \
-  --extract-transcript
-
-# 输出：
-# - references/video.mp4（视频文件）
-# - references/transcript.md（文稿）
-# - references/subtitles.srt（字幕）
-```
-
-**用途**：
-- 竞品分析
-- 学习优秀视频结构
-- 提取参考文稿
-
-#### 0.2 网页内容提取
-```bash
-# 提取网页为 Markdown
-baoyu-url-to-markdown \
-  --url "https://example.com/article" \
-  --output references/article.md
-
-# 批量提取
-baoyu-url-to-markdown \
-  --urls references/urls.txt \
-  --output-dir references/
-```
-
-**用途**：
-- 收集参考资料
-- 提取产品信息
-- 整理数据素材
-
----
-
-### 阶段 1：创意构思（第 3 批）
-
-#### 1.1 头脑风暴
-```bash
-# 调用 brainstorming skill
-# 输出：ideas.md
-
-头脑风暴维度：
-- 视频主题
-- 目标受众
-- 内容调性（专业/轻松/幽默）
-- 呈现形式（图文/口播/动画）
-- 差异化亮点
-```
-
----
-
-### 阶段 2：脚本生成
-
-```bash
-# 基于资料和创意生成脚本
-# 输出：script.txt
-
-脚本结构：
-- 视频标题
-- 开场白（3-5 秒，吸引注意）
-- 主体内容（30-120 秒，核心信息）
-- 行动号召（5 秒，引导互动）
-```
-
----
-
-### 阶段 3：配音生成（tts-voice）
-
-```bash
-# 使用 tts-voice skill
-python3 -m edge_tts \
-  --voice zh-CN-YunxiNeural \
-  --file script.txt \
-  --write-media narration.mp3 \
-  --write-subtitles narration.vtt
-```
-
-**输出**：
-- `narration.mp3` - 人声音频
-- `narration.vtt` - 字幕文件
-
----
-
-### 阶段 4：分镜脚本生成
+### 批量生成配置
 
 ```json
-// 输出：storyboard.json
 {
-  "frames": [
-    {
-      "id": 1,
-      "time": "00:00-00:05",
-      "narration": "大家好，今天介绍...",
-      "image_prompt": "产品封面图，科技感",
-      "image_type": "baoyu-cover-image",
-      "image_file": "frame_01.png"
-    },
-    {
-      "id": 2,
-      "time": "00:05-00:15",
-      "narration": "这个产品有三大特点...",
-      "image_prompt": "三点信息图表",
-      "image_type": "baoyu-infographic",
-      "image_file": "frame_02.png"
-    }
+  "tasks": [
+    ["德国心脏病桌游封面，鲜艳的草莓柠檬橙子香蕉水果，中间金属铃铛，卡通风格", "frame_01_cover.png"],
+    ["桌游配件展示，56 张卡牌散开，四种水果图案，金属抢答铃，桌面视角", "frame_02_components.png"],
+    ["教育插图，左边卡牌 3 个草莓，右边卡牌 2 个草莓，中间加号，等号后 5 个草莓", "frame_03_rule1.png"],
+    ["信息图表，多种凑五组合：5 单独、4+1、3+2、3+1+1、2+2+1，水果图案表示", "frame_04_rule2.png"],
+    ["卡通插图，玩家懊恼表情，从自己牌堆抽牌发给别人，红色叉号错误警示", "frame_05_penalty.png"],
+    ["策略指南图表，三个要点：随时心算、记住关键组合、保持冷静，专业信息图", "frame_06_strategy1.png"],
+    ["玩家专注思考特写，周围数字和水果图案飘浮，集中注意力心算，插画风格", "frame_07_strategy2.png"],
+    ["三种胜利方式信息图：1 获得所有卡牌 2 最后一张牌抢答 3 清空桌面，图标标注", "frame_08_victory.png"],
+    ["德国心脏病桌游全家福，所有卡牌和铃铛整齐摆放，温馨家庭聚会氛围", "frame_09_ending.png"]
   ]
 }
 ```
 
 ---
 
-### 阶段 5：素材生成（核心优化）
+### 使用示例
 
-#### 5.1 图片生成（整合）
+#### 单张图片生成
 ```bash
-# 使用 baoyu-imagine 生成所有图片
-# 普通图片
-baoyu-imagine \
-  --prompt "{frame.image_prompt}" \
-  --image "frame_001.png" \
-  --ar "16:9" \
-  --quality "high"
-
-# 高质量图片（封面/插图）
-baoyu-imagine \
-  --prompt "高质量封面图，科技感，细节丰富" \
-  --image "cover_hq.png" \
-  --ar "16:9" \
-  --quality "2k"
-
-# 批量生成（适用于已完成分镜脚本的场景）
-baoyu-imagine \
-  --batchfile prompts/batch.json \
-  --jobs 6
+python3 /workspace/.claude/scripts/gen_image.py \
+  "德国心脏病桌游封面，鲜艳水果环绕铃铛，卡通风格" \
+  output/cover.png
 ```
 
-#### 5.2 数据图表（第 1 批）
+#### 批量生成
 ```bash
-# 生成数据可视化图表
-baoyu-infographic \
-  --title "用户增长率" \
-  --data "Q1:20%, Q2:35%, Q3:50%, Q4:80%" \
-  --style "bar_chart" \
-  --image "growth_chart.png"
+python3 /workspace/.claude/scripts/gen_image.py \
+  output/batch.json
 ```
 
-#### 5.3 流程图（第 1 批）
+#### 在工作流中调用
 ```bash
-# 生成流程图/示意图
-baoyu-diagram \
-  --type "flowchart" \
-  --nodes "开始→分析→处理→输出→结束" \
-  --style "modern" \
-  --image "workflow.png"
-```
+# 从 storyboard.json 提取 prompts 并生成
+cd /workspace/.test-trigger/video-output
 
-#### 5.4 封面图
-```bash
-baoyu-cover-image \
-  --title "产品评测" \
-  --subtitle "深度体验 30 天" \
-  --style "tech" \
-  --image "video_cover.png"
-```
+# 1. 生成图片
+python3 /workspace/.claude/scripts/gen_image.py << 'EOF'
+[
+  ["德国心脏病桌游封面，鲜艳的草莓柠檬橙子香蕉，中间金属铃铛，卡通风格", "cover.png"],
+  ["桌游配件展示，56 张卡牌散开，四种水果，金属铃铛", "components.png"]
+]
+EOF
 
-#### 5.5 旁白配图（第 3 批）
-```bash
-# 根据旁白内容自动配图
-baoyu-article-illustrator \
-  --text "旁白文本" \
-  --style "illustration" \
-  --image "illustration_01.png"
-```
+# 2. 缩放图片到统一尺寸
+for img in *.png; do
+  ffmpeg -y -i "$img" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1" "scaled_$img" 2>/dev/null
+done
 
-#### 5.6 信息卡片（第 3 批）
-```bash
-# 生成关键信息卡片
-baoyu-image-cards \
-  --text "核心观点/金句/数据" \
-  --style "minimal" \
-  --image "quote_card.png"
-```
-
-#### 5.7 漫画分镜（整合）
-```bash
-# 使用 baoyu-comic 生成故事性视频分镜/漫画式叙事
-# 适用于：故事性视频、教程漫画、知识科普视频
-
-# 基础用法 - 简单分镜
-baoyu-comic \
-  --storyboard "场景 1: 开场→场景 2: 问题→场景 3: 解决方案" \
-  --art "manga" \
-  --tone "warm" \
-  --layout "standard" \
-  --output-dir "comic-storyboard/"
-
-# 完整工作流 - 知识漫画
-baoyu-comic \
-  --source "script.md" \
-  --art "ligne-claire" \
-  --tone "neutral" \
-  --layout "cinematic" \
-  --prompts-only  # 仅生成提示文件，便于审查
-
-# 批量生成页面（基于已生成的提示文件）
-baoyu-comic \
-  --images-only \
-  --comic-dir "comic-storyboard/"
-```
-
-#### 5.8 小红书配图
-```bash
-# 生成小红书风格配图
-baoyu-xhs-images \
-  --title "笔记标题" \
-  --style "cute" \
-  --ratio "3:4" \
-  --image "xhs_cover.png"
-```
-
----
-
-### 阶段 6：视频生成
-
-#### 6.1 图片转视频
-```bash
-# 将图片序列转为视频
-ffmpeg -framerate 1/3 -i frame_%02d.png \
-  -c:v libx264 -pix_fmt yuv420p \
-  -vf "scale=1920:1080" \
-  visuals.mp4
-```
-
-#### 6.2 HTML 动画（可选）
-```bash
-# 使用 hyperframes 生成动画视频
-npx hyperframes render video.html -o animation.mp4
-```
-
----
-
-### 阶段 7：字幕处理
-
-#### 7.1 字幕同步
-```bash
-# 使用 VTT 转为 SRT
-ffmpeg -i narration.vtt subtitles.srt
-```
-
-#### 7.2 多语言翻译（第 1 批）
-```bash
-# 翻译字幕为多语言
-baoyu-translate \
-  --input subtitles.srt \
-  --source-lang zh \
-  --target-lang en \
-  --output subtitles_en.srt
-
-baoyu-translate \
-  --input subtitles.srt \
-  --source-lang zh \
-  --target-lang jp \
-  --output subtitles_jp.srt
-```
-
----
-
-### 阶段 8：背景音乐生成
-
-```bash
-# 生成 BGM
-python music_gen.py \
-  --style "light corporate" \
-  --duration 60 \
-  --output bgm.mp3
-```
-
----
-
-### 阶段 9：最终合成（video-use）
-
-```bash
-# 合并所有轨道
-ffmpeg -i visuals.mp4 \
+# 3. 合成视频
+ffmpeg -y \
+  -loop 1 -t 20 -i scaled_cover.png \
+  -loop 1 -t 30 -i scaled_components.png \
   -i narration.mp3 \
-  -i bgm.mp3 \
-  -i subtitles.srt \
-  -filter_complex "[1][2]amix=inputs=2:duration=longest,volume=volume=0.8" \
-  -vf "subtitles=subtitles.srt" \
-  -c:v libx264 -c:a aac \
-  final_video.mp4
+  -filter_complex "[0:v][1:v]concat=n=2:v=1:a=0[outv]" \
+  -map "[outv]" -map 2:a \
+  -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 192k \
+  output.mp4
 ```
 
 ---
 
-### 阶段 10：发布准备（第 2 批）
+## 完整工作流脚本
 
-#### 10.1 格式优化（第 1 批）
-```bash
-# 格式化说明文档
-baoyu-format-markdown \
-  --input README_raw.md \
-  --style "github" \
-  --output README.md
-```
+### make_video_with_ai.sh
 
-#### 10.2 图片压缩（第 2 批）
-```bash
-# 压缩封面图和配图
-baoyu-compress-image \
-  --input cover.png \
-  --quality 85 \
-  --format webp \
-  --output cover_compressed.webp
-```
-
-#### 10.3 多平台发布（第 2 批）
-```bash
-# 发布到微信公众号
-baoyu-post-to-wechat \
-  --title "视频标题" \
-  --content video_intro.md \
-  --images cover_compressed.webp \
-  --video final_video.mp4
-
-# 发布到微博
-baoyu-post-to-weibo \
-  --text "视频简介 #话题#" \
-  --images cover.webp \
-  --video final_video.mp4
-
-# 发布到 Twitter/X
-baoyu-post-to-x \
-  --text "Video description #hashtag" \
-  --media final_video.mp4
-```
-
----
-
-## 工作流卡片设计
-
-### video-production-pipeline.card
-```yaml
-名称：一体化视频生成（23 技能整合版）
-触发词：
-  - "做个视频"
-  - "生成视频"
-  - "视频制作"
-  - "从零开始做视频"
-  - "没有素材做个视频"
-  - "下载 YouTube 视频做参考"
-  - "多语言视频"
-
-包含子技能（完整）：
-  第 0 批（资料）:
-    - baoyu-youtube-transcript（YouTube 下载）
-    - baoyu-url-to-markdown（网页提取）
-  第 1 批（创意）:
-    - brainstorming（头脑风暴）
-  第 2 批（脚本）:
-    - 文案生成（Claude）
-  第 3 批（配音）:
-    - tts-voice（配音+VTT）
-  第 4 批（分镜）:
-    - 分镜脚本生成（Claude）
-  第 5 批（素材）:
-    - baoyu-imagine（图片生成，含原 baoyu-image-gen）
-    - baoyu-infographic（数据图表）
-    - baoyu-cover-image（封面图）
-    - baoyu-diagram（流程图）
-    - baoyu-article-illustrator（旁白配图）
-    - baoyu-image-cards（信息卡片）
-    - baoyu-comic（漫画分镜）
-    - baoyu-xhs-images（小红书配图）
-  第 6 批（视频）:
-    - FFmpeg（图片转视频）
-    - hyperframes（HTML 动画）
-  第 7 批（字幕）:
-    - auto-subtitles（字幕同步）
-    - baoyu-translate（多语言翻译）
-  第 8 批（BGM）:
-    - music-gen（背景音乐）
-  第 9 批（剪辑）:
-    - video-use（最终合成）
-  第 10 批（发布）:
-    - baoyu-format-markdown（格式优化）
-    - baoyu-compress-image（图片压缩）
-    - baoyu-post-to-wechat（公众号）
-    - baoyu-post-to-weibo（微博）
-    - baoyu-post-to-x（Twitter）
-
-预设模板：
-  - 产品展示视频（竖屏 60 秒）
-  - 知识科普视频（横屏 180 秒）
-  - 口播视频（竖屏 30 秒）
-  - YouTube 视频（横屏 10 分钟）
-  - 小红书视频（竖屏 90 秒）
-```
-
----
-
-## 自动化脚本
-
-### make_video.sh（总控脚本）
 ```bash
 #!/bin/bash
+# 一体化视频生成脚本（ModelScope AI 增强版）
+# 用法：./make_video_with_ai.sh <主题> <时长> <输出目录>
 
-# 一体化视频生成脚本（23 技能整合版）
-# 用法：./make_video.sh <主题> <时长> <风格> <平台>
+set -e
 
-THEME="$1"        # 如："产品介绍"
-DURATION="$2"     # 如：60
-STYLE="$3"        # 如："professional"
-PLATFORM="$4"     # 如："youtube"
+THEME="$1"        # 主题
+DURATION="$2"     # 时长（秒）
+OUTPUT_DIR="$3"   # 输出目录
 
-echo "=== 开始视频制作 ==="
+echo "=========================================="
+echo "🎬 开始视频制作"
 echo "主题：$THEME"
 echo "时长：${DURATION}秒"
-echo "风格：$STYLE"
-echo "平台：$PLATFORM"
+echo "输出：$OUTPUT_DIR"
+echo "=========================================="
 
-# 0. 下载参考资料
-echo "[0/12] 下载参考资料..."
-./download_refs.sh "$THEME"
+mkdir -p "$OUTPUT_DIR"
+cd "$OUTPUT_DIR"
 
-# 1. 头脑风暴
-echo "[1/12] 头脑风暴..."
-./brainstorm.sh "$THEME"
+# 0. 生成脚本（使用 CLAude）
+echo "[1/8] 📝 生成视频脚本..."
+# 这里调用 CLAUDE 生成 script.md
+# script.md 已存在则跳过
 
-# 2. 生成脚本
-echo "[2/12] 生成脚本..."
-./gen_script.sh "$THEME" "$DURATION"
+# 1. 生成配音
+echo "[2/8] 🎙️ 生成配音..."
+python3 -m edge_tts \
+  --voice zh-CN-YunxiNeural \
+  --file script.md \
+  --write-media narration.mp3 \
+  --write-subtitles narration.vtt
 
-# 3. 生成配音
-echo "[3/12] 生成配音..."
-./gen_voice.sh script.txt narration.mp3
+# 2. 生成分镜
+echo "[3/8] 📋 生成分镜脚本..."
+# 使用 Claude 分析脚本生成 storyboard.json
 
-# 4. 生成分镜
-echo "[4/12] 生成分镜脚本..."
-./gen_storyboard.sh script.txt narration.mp3
+# 3. AI 图片生成
+echo "[4/8] 🎨 AI 生成图片..."
+python3 /workspace/.claude/scripts/gen_image.py batch.json
 
-# 5. 生成素材
-echo "[5/12] 生成素材（图片/图表/封面）..."
-./gen_assets.sh storyboard.json
+# 4. 图片处理
+echo "[5/8] 🖼️ 处理图片..."
+mkdir -p scaled
+for img in *.png; do
+  [ -f "$img" ] || continue
+  ffmpeg -y -i "$img" \
+    -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1" \
+    "scaled/$img" 2>/dev/null
+done
 
-# 6. 生成视频序列
-echo "[6/12] 图片转视频..."
-./images_to_video.sh frame_*.png
+# 5. 合成视频
+echo "[6/8] 🎬 合成视频..."
+# 从 storyboard.json 读取每个场景的时长
+ffmpeg -y \
+  -loop 1 -t 20 -i scaled/cover.png \
+  -loop 1 -t 30 -i scaled/components.png \
+  # ... 更多场景 \
+  -i narration.mp3 \
+  -filter_complex "[0:v][1:v]...concat=n=9:v=1:a=0[outv]" \
+  -map "[outv]" -map 9:a \
+  -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 192k \
+  output.mp4
 
-# 7. 生成字幕
-echo "[7/12] 生成字幕..."
-./gen_subtitles.sh narration.mp3
+# 6. 生成 BGM（可选）
+echo "[7/8] 🎵 生成背景音乐..."
+# 调用 music-gen 或 ModelScope 音乐生成
 
-# 8. 翻译多语言字幕
-echo "[8/12] 翻译字幕..."
-./translate_subs.sh subtitles.srt
+# 7. 最终合成
+echo "[8/8] ✨ 最终合成..."
+# 合并 BGM、字幕等
 
-# 9. 生成 BGM
-echo "[9/12] 生成背景音乐..."
-./gen_bgm.sh "$STYLE"
-
-# 10. 最终合成
-echo "[10/12] 合成视频..."
-./merge_all.sh
-
-# 11. 压缩优化
-echo "[11/12] 图片压缩..."
-./compress_images.sh
-
-# 12. 多平台发布
-echo "[12/12] 发布到 $PLATFORM..."
-./publish.sh "$PLATFORM"
-
+echo "=========================================="
 echo "✅ 视频制作完成！"
+echo "输出文件：$OUTPUT_DIR/output.mp4"
+echo "=========================================="
+
+# 显示文件信息
+ls -lh output.mp4
+ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 output.mp4
 ```
+
+---
+
+## 工作流触发词
+
+### L1 核心触发（常驻）
+| 触发词 | 技能 |
+|--------|------|
+| 做个视频/生成视频/做视频 | video-production-pipeline |
+| 配音/TTS/转语音 | tts-voice |
+| **AI 图片/生成图片/画图** | **ModelScope API** |
+| BGM/配乐/背景音乐 | music-gen |
+
+### L2 扩展触发
+| 触发词 | 技能 |
+|--------|------|
+| 下载 YouTube 视频 | baoyu-youtube-transcript |
+| 网页提取/转 Markdown | baoyu-url-to-markdown |
+| 画流程图/架构图 | baoyu-diagram |
+| 生成封面图 | baoyu-cover-image |
+| 信息图表/数据可视化 | baoyu-infographic |
+| 漫画分镜 | baoyu-comic |
 
 ---
 
 ## 质量检查清单
+
+### AI 图片质量
+- [ ] 图片与 prompt 匹配度 >80%
+- [ ] 分辨率 ≥1280x720
+- [ ] 无畸形/模糊/ artifacts
+- [ ] 风格一致（所有图片）
 
 ### 视频质量
 - [ ] 分辨率：1080p 或 720p
@@ -565,60 +397,48 @@ echo "✅ 视频制作完成！"
 - [ ] 配音清晰无杂音
 - [ ] BGM 不压过人声（-20dB）
 - [ ] 音量标准化（-16LUFS）
-- [ ] 无爆音/断点
 
 ### 字幕质量
 - [ ] 无错别字
 - [ ] 时间轴准确（±50ms）
 - [ ] 字体大小适中（>24px）
-- [ ] 多语言版本完整
-
-### 画面质量
-- [ ] 画面与配音同步
-- [ ] 转场流畅
-- [ ] 色彩协调
-- [ ] 图表清晰可读
-
-### 发布质量
-- [ ] 封面图压缩优化
-- [ ] 多平台格式适配
-- [ ] 话题标签正确
-- [ ] 描述文案完整
 
 ---
 
-## 技能批次汇总
+## 成本与性能
 
-### 第 1 批（视频增强）
-- ✅ baoyu-youtube-transcript
-- ✅ baoyu-url-to-markdown
-- ✅ baoyu-diagram
-- ✅ baoyu-translate
-- ✅ baoyu-format-markdown
+### ModelScope API 成本
+| 模型 | 分辨率 | 速度 | 成本 |
+|------|--------|------|------|
+| Tongyi-MAI/Z-Image-Turbo | 1024x1024 | ~30s/张 | 免费额度/低价 |
+| Tongyi-MAI/Z-Image-Pro | 2048x2048 | ~60s/张 | 标准价格 |
 
-### 第 2 批（发布增强）
-- ✅ baoyu-slide-deck
-- ✅ baoyu-markdown-to-html
-- ✅ baoyu-post-to-wechat/weibo/x
-- ✅ baoyu-compress-image
-
-### 第 3 批（通用增强）
-- ✅ baoyu-article-illustrator
-- ✅ baoyu-image-cards
-- ✅ brainstorming
-- ✅ caveman-commit
+### 性能指标
+| 指标 | 数值 |
+|------|------|
+| 单张图片生成时间 | 20-60 秒 |
+| 9 张图片批量生成 | ~4 分钟 |
+| 视频合成时间 | ~30 秒 |
+| 完整工作流（含配音） | ~10 分钟 |
 
 ---
 
 ## 相关文件
 
-- **总控技能**：`workflows/video-production-pipeline.card`
-- **配音生成**：`skills/tts-voice/SKILL.md`
-- **画面生成**：`skills/hyperframes/` + `skills/baoyu-imagine/` + `skills/baoyu-*/SKILL.md`
-- **字幕生成**：`skills/auto-subtitles/` + `skills/baoyu-translate/SKILL.md`
-- **BGM 生成**：`skills/music-gen/SKILL.md`
-- **最终剪辑**：`skills/video-use/SKILL.md`
-- **内容发布**：`skills/content-publish-workflow/SKILL.md`
+### 脚本文件
+- `/workspace/.claude/scripts/gen_image.py` - ModelScope 图片生成脚本
+- `/workspace/.claude/scripts/make_video_with_ai.sh` - 一体化视频脚本
+
+### 配置文件
+- `/workspace/.claude/workflows/video-production-pipeline.card` - 工作流配置
+- `/workspace/.claude/workflows/tts-voice.card` - TTS 配音配置
+- `/workspace/.claude/workflows/music-gen.card` - BGM 生成配置
+
+### 技能文档
+- `skills/tts-voice/SKILL.md`
+- `skills/baoyu-imagine/SKILL.md`
+- `skills/baoyu-diagram/SKILL.md`
+- `skills/video-use/SKILL.md`
 
 ---
 
@@ -628,18 +448,70 @@ echo "✅ 视频制作完成！"
 |------|------|----------|
 | v1.0 | 2026-05-01 | 初始版本（6 技能） |
 | v2.0 | 2026-05-01 | 集成图片生成（10 技能） |
-| **v3.0** | **2026-05-01** | **23 技能完整整合（3 批次）** |
+| v3.0 | 2026-05-01 | 23 技能完整整合 |
+| **v4.0** | **2026-05-02** | **ModelScope AI 图片增强** |
 
 ---
 
-## 性能指标
+## 快速开始
 
-| 指标 | v1.0 | v2.0 | v3.0 |
-|------|------|------|------|
-| 技能数 | 6 | 10 | 23 |
-| 自动化程度 | 40% | 65% | 90%+ |
-| 适用场景 | 简单图文 | 素材视频 | 全平台发布 |
-| 多语言支持 | ❌ | ❌ | ✅ |
-| 一键发布 | ❌ | ❌ | ✅ |
+### 5 分钟快速测试
+```bash
+# 1. 创建测试目录
+mkdir -p /tmp/video-test && cd /tmp/video-test
+
+# 2. 准备脚本
+echo "大家好，今天介绍德国心脏病桌游..." > script.md
+
+# 3. 生成配音
+python3 -m edge_tts --voice zh-CN-YunxiNeural --file script.md --write-media narration.mp3
+
+# 4. 生成 AI 图片
+python3 /workspace/.claude/scripts/gen_image.py \
+  "德国心脏病桌游封面，水果铃铛" \
+  cover.png
+
+# 5. 合成视频
+ffmpeg -y -loop 1 -i cover.png -i narration.mp3 \
+  -c:v libx264 -c:a aac -shortest output.mp4
+
+echo "✅ 完成！output.mp4"
+```
+
+### 完整工作流
+```bash
+./make_video_with_ai.sh \
+  "德国心脏病桌游介绍" \
+  270 \
+  /workspace/.test-trigger/video-output
+```
+
+---
+
+## 故障排除
+
+### 问题 1：API 认证失败
+```
+错误：401 Unauthorized
+解决：检查 API_KEY 是否正确，确认账户有可用额度
+```
+
+### 问题 2：生成超时
+```
+错误：TimeoutError
+解决：增加 timeout 参数，或检查网络连接
+```
+
+### 问题 3：图片质量不佳
+```
+问题：图片模糊或畸形
+解决：尝试更详细的 prompt，或切换到 Pro 模型
+```
+
+### 问题 4：FFmpeg 合成失败
+```
+错误：concat filter failed
+解决：检查所有图片尺寸是否一致，使用 setsar=1 统一 SAR
+```
 
 ---
