@@ -1,0 +1,17 @@
+[
+  {
+    "theme": "AI 绘画入门教程",
+    "duration": 60,
+    "voice": "zh-CN-YunxiNeural"
+  },
+  {
+    "theme": "Python 编程技巧",
+    "duration": 90,
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "theme": "健康饮食指南",
+    "duration": 120,
+    "voice": "zh-CN-YunjianNeural"
+  }
+]
