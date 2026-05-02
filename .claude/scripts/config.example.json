@@ -1,0 +1,12 @@
+{
+  "theme": "AI 视频制作教程",
+  "duration": 60,
+  "voice": "zh-CN-YunxiNeural",
+  "width": 1280,
+  "height": 720,
+  "crf": 23,
+  "audio-bitrate": "192k",
+  "with-bgm": false,
+  "bgm-file": "",
+  "quality-check": true
+}
