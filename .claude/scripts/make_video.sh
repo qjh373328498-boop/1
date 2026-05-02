@@ -248,21 +248,74 @@ step3_generate_storyboard() {
     
     echo "📋 正在分析脚本生成分镜..."
     
-    # 简单实现：从脚本提取场景
-    cat > "$OUTPUT_DIR/storyboard.json" << 'EOF'
-{
-  "title": "Video Storyboard",
-  "scenes": [
-    {"id": 1, "time": "0:00-0:20", "type": "opening", "image_prompt": "视频封面，吸引人", "narration": "开场白"},
-    {"id": 2, "time": "0:20-1:00", "type": "content", "image_prompt": "内容展示图", "narration": "主体内容 1"},
-    {"id": 3, "time": "1:00-1:40", "type": "content", "image_prompt": "详细解释图", "narration": "主体内容 2"},
-    {"id": 4, "time": "1:40-2:20", "type": "content", "image_prompt": "示例演示图", "narration": "主体内容 3"},
-    {"id": 5, "time": "2:20-3:00", "type": "ending", "image_prompt": "结尾感谢画面", "narration": "结尾"}
-  ]
-}
-EOF
+    # 从脚本动态提取场景
+    cd "$OUTPUT_DIR"
+    python3 << 'PYTHON'
+import json
+import re
+import os
+
+script_file = 'script.md'
+output_file = 'storyboard.json'
+
+try:
+    with open(script_file, 'r', encoding='utf-8') as f:
+        content = f.read()
     
-    print_step "分镜已生成：$OUTPUT_DIR/storyboard.json"
+    # 提取章节标题
+    sections = re.findall(r'^## (.+)$', content, re.MULTILINE)
+    
+    if not sections:
+        # 如果没有章节，使用默认 5 场景
+        sections = ["开场", "内容 1", "内容 2", "内容 3", "结尾"]
+    
+    scenes = []
+    for i, section in enumerate(sections, 1):
+        # 从章节生成图片 prompt
+        prompt = f"与\"{section}\"相关的插图，教育风格，清晰易懂，专业质量"
+        scenes.append({
+            "id": i,
+            "title": section,
+            "image_prompt": prompt,
+            "narration": f"关于{section}的内容"
+        })
+    
+    result = {
+        "title": "Video Storyboard",
+        "scenes": scenes
+    }
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    
+    print(f"📋 分镜已生成：{len(scenes)} 个场景")
+    
+except Exception as e:
+    print(f"⚠️  分镜生成失败，使用默认模板：{e}")
+    # 使用默认模板
+    result = {
+        "title": "Video Storyboard",
+        "scenes": [
+            {"id": 1, "title": "开场", "image_prompt": "视频封面，吸引人", "narration": "开场白"},
+            {"id": 2, "title": "内容 1", "image_prompt": "内容展示图", "narration": "主体内容 1"},
+            {"id": 3, "title": "内容 2", "image_prompt": "详细解释图", "narration": "主体内容 2"},
+            {"id": 4, "title": "内容 3", "image_prompt": "示例演示图", "narration": "主体内容 3"},
+            {"id": 5, "title": "结尾", "image_prompt": "结尾感谢画面", "narration": "结尾"}
+        ]
+    }
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    print(f"📋 已生成默认分镜：5 个场景")
+PYTHON
+    cd - > /dev/null
+    
+    if [ -f "$OUTPUT_DIR/storyboard.json" ]; then
+        scene_count=$(python3 -c "import json; print(len(json.load(open('$OUTPUT_DIR/storyboard.json'))['scenes']))")
+        print_step "分镜已生成：storyboard.json ($scene_count 个场景)"
+    else
+        print_error "分镜生成失败"
+        exit 1
+    fi
 }
 
 step4_generate_images() {
