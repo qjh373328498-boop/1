@@ -42,6 +42,15 @@ VIDEO_CODEC="libx264"
 VIDEO_CRF=23
 AUDIO_BITRATE="192k"
 
+# V2.3 批量任务参数
+BATCH_MODE=false
+BATCH_FILE=""
+TASK_INDEX=0
+TASK_TOTAL=0
+START_TIME=0
+MAX_RETRIES=2
+ERROR_HANDLING="stop"
+
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -140,6 +149,156 @@ validate_config() {
     log_info "配置验证通过"
 }
 
+# ==================== V2.3 批量任务功能 ====================
+
+load_batch_tasks() {
+    if [ -n "$BATCH_FILE" ] && [ -f "$BATCH_FILE" ]; then
+        echo "📋 加载批量任务：$BATCH_FILE"
+        
+        mapfile -t TASK_LIST < <(python3 << PYTHON
+import json
+with open('$BATCH_FILE', 'r', encoding='utf-8') as f:
+    tasks = json.load(f)
+for task in tasks:
+    print(json.dumps(task, ensure_ascii=False))
+PYTHON
+)
+        TASK_TOTAL=${#TASK_LIST[@]}
+        echo "  共 $TASK_TOTAL 个任务"
+        log_info "批量任务：$TASK_TOTAL 个"
+    fi
+}
+
+process_batch_task() {
+    local task_json="$1"
+    local idx="$2"
+    
+    # 解析 JSON 任务
+    local theme=$(echo "$task_json" | python3 -c "import sys,json; t=json.load(sys.stdin); print(t.get('theme',''))")
+    local duration=$(echo "$task_json" | python3 -c "import sys,json; t=json.load(sys.stdin); print(t.get('duration',180))")
+    local voice=$(echo "$task_json" | python3 -c "import sys,json; t=json.load(sys.stdin); print(t.get('voice','zh-CN-YunxiNeural'))")
+    
+    # 生成安全的目录名
+    local safe_name=$(echo "$theme" | tr ' ' '_' | tr -cd 'a-zA-Z0-9_')
+    local task_output="$OUTPUT_DIR/${safe_name}_$(date +%H%M%S)"
+    
+    print_header "任务 $idx/$TASK_TOTAL"
+    echo "主题：$theme"
+    echo "时长：$duration 秒 | 语音：$voice"
+    echo "输出：$task_output"
+    echo ""
+    
+    # 执行单个任务
+    THEME="$theme"
+    DURATION="$duration"
+    VOICE="$voice"
+    OUTPUT_DIR="$task_output"
+    LOG_FILE="$task_output/make_video.log"
+    RESUME_FROM=0
+    RETRY_COUNT=0
+    
+    mkdir -p "$task_output"
+    
+    # 带重试的执行
+    if execute_with_retry; then
+        echo "✅ 任务 $idx 完成"
+        log_info "任务 $idx 完成：$theme"
+        return 0
+    else
+        echo "❌ 任务 $idx 失败"
+        log_error "任务 $idx 失败：$theme"
+        
+        if [ "$ERROR_HANDLING" = "stop" ]; then
+            print_error "批量任务中止"
+            return 1
+        fi
+        return 1
+    fi
+}
+
+execute_with_retry() {
+    RETRY_COUNT=0
+    
+    while true; do
+        if run_single_task; then
+            return 0
+        else
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -le $MAX_RETRIES ]; then
+                print_warning "重试任务 (第 $RETRY_COUNT/$MAX_RETRIES 次)..."
+                log_info "重试任务 (第 $RETRY_COUNT 次)"
+                sleep 5
+            else
+                print_error "已达最大重试次数 ($MAX_RETRIES)"
+                return 1
+            fi
+        fi
+    done
+}
+
+run_single_task() {
+    step1_generate_script && \
+    echo "" && \
+    step2_generate_voice && \
+    echo "" && \
+    step3_generate_storyboard && \
+    echo "" && \
+    step4_generate_images && \
+    echo "" && \
+    step5_scale_images && \
+    echo "" && \
+    step6_merge_video
+}
+
+# ==================== V2.3 智能进度预估 ====================
+
+calc_eta() {
+    local step=$1
+    local total=$2
+    
+    if [ $START_TIME -eq 0 ]; then
+        return
+    fi
+    
+    local elapsed=$(($(date +%s) - START_TIME))
+    
+    if [ $step -gt 0 ]; then
+        local avg_time=$((elapsed / step))
+        local remaining=$((total - step))
+        local eta_seconds=$((avg_time * remaining))
+        local eta_min=$((eta_seconds / 60))
+        local eta_sec=$((eta_seconds % 60))
+        
+        local end_timestamp=$(($(date +%s) + eta_seconds))
+        local est_end=$(date -d "@$end_timestamp" '+%H:%M:%S' 2>/dev/null || date -r $end_timestamp '+%H:%M:%S' 2>/dev/null || echo "N/A")
+        
+        printf "${YELLOW}⏱️  %d分%02d秒 | 预计剩余：%d分%02d秒 | 完成时间：%s${NC}\n" $((elapsed / 60)) $((elapsed % 60)) $eta_min $eta_sec "$est_end"
+    else
+        printf "${YELLOW}⏱️  已用时：%d分%02d秒${NC}\n" $((elapsed / 60)) $((elapsed % 60))
+    fi
+}
+
+# 带 ETA 的进度显示
+update_progress_eta() {
+    local step=$1
+    local message=$2
+    CURRENT_STEP=$step
+    
+    local percentage=$((step * 100 / TOTAL_STEPS))
+    local filled=$((percentage / 5))
+    local empty=$((20 - filled))
+    local bar=""
+    for ((i=0; i<filled; i++)); do bar+="█"; done
+    for ((i=0; i<empty; i++)); do bar+="░"; done
+    
+    printf "\r${CYAN}⏳ 进度：[%s] %3d%% - %-50s${NC}" "$bar" "$percentage" "$message"
+    calc_eta $step $TOTAL_STEPS
+    echo ""
+    
+    log_step "$step/$TOTAL_STEPS" "$message"
+}
+
+
 # ==================== 工具函数 ====================
 
 print_header() {
@@ -229,7 +388,7 @@ check_dependencies() {
 
 show_help() {
     cat << EOF
-🎬 一键视频生成脚本 (v2.2)
+🎬 一键视频生成脚本 (v2.3 - 批量任务 + 智能进度)
 
 用法:
   \$0 --theme "视频主题" --duration 180
@@ -248,6 +407,9 @@ show_help() {
   -b, --with-bgm          添加背景音乐（启用 BGM 功能）
       --bgm-file FILE     BGM 文件路径（MP3 格式）
   -c, --config FILE       JSON 配置文件路径
+      --batch FILE        批量任务 JSON 文件
+      --max-retries N     最大重试次数 (默认：2)
+      --error-handling S  错误处理：stop/continue/retry (默认：stop)
       --resume-from N     从第 N 步继续执行 (1-6)
       --width NUM         图片宽度 (默认：1280)
       --height NUM        图片高度 (默认：720)
@@ -356,6 +518,19 @@ parse_args() {
                 ;;
             --height)
                 IMAGE_HEIGHT="$2"
+                shift 2
+                ;;
+            --batch)
+                BATCH_MODE=true
+                BATCH_FILE="$2"
+                shift 2
+                ;;
+            --max-retries)
+                MAX_RETRIES="$2"
+                shift 2
+                ;;
+            --error-handling)
+                ERROR_HANDLING="$2"
                 shift 2
                 ;;
             --crf)
@@ -921,7 +1096,64 @@ main() {
         show_help
     fi
     
-    print_header "视频生成工作流 (v2.2)"
+    # V2.3 批量任务模式
+    if [ "$BATCH_MODE" = true ] && [ -n "$BATCH_FILE" ]; then
+        if [ -z "$OUTPUT_DIR" ]; then
+            OUTPUT_DIR="./video-batch-$(date +%Y%m%d-%H%M%S)"
+        fi
+        mkdir -p "$OUTPUT_DIR"
+        
+        load_batch_tasks
+        
+        if [ $TASK_TOTAL -eq 0 ]; then
+            print_error "批量任务列表为空"
+            exit 1
+        fi
+        
+        print_header "批量任务处理"
+        echo "任务总数：$TASK_TOTAL"
+        echo "错误处理：$ERROR_HANDLING"
+        echo "最大重试：$MAX_RETRIES"
+        echo "输出目录：$OUTPUT_DIR"
+        echo ""
+        
+        check_dependencies
+        
+        START_TIME=$(date +%s)
+        
+        local success=0
+        local failed=0
+        
+        for ((i=0; i<TASK_TOTAL; i++)); do
+            if process_batch_task "${TASK_LIST[$i]}" $((i+1)); then
+                success=$((success + 1))
+            else
+                failed=$((failed + 1))
+                if [ "$ERROR_HANDLING" = "stop" ]; then
+                    break
+                fi
+            fi
+            echo ""
+            echo "========================================="
+            echo "进度：$success 成功，$failed 失败"
+            echo "========================================="
+            echo ""
+        done
+        
+        local end_time=$(date +%s)
+        local total=$((end_time - START_TIME))
+        
+        print_header "批量任务完成"
+        echo "成功：$success / $TASK_TOTAL"
+        [ $failed -gt 0 ] && echo "失败：$failed"
+        printf "总用时：%d分%02d秒\n" $((total / 60)) $((total % 60))
+        
+        [ $failed -gt 0 ] && exit 1
+        exit 0
+    fi
+    
+    # 单任务模式
+    print_header "视频生成工作流 (v2.3)"
     echo "主题：${THEME:-N/A}"
     echo "时长：${DURATION}秒"
     echo "输出：$OUTPUT_DIR"
@@ -943,6 +1175,8 @@ main() {
     echo "========================================="
     echo ""
     
+    START_TIME=$(date +%s)
+    
     step1_generate_script
     echo ""
     step2_generate_voice
@@ -958,6 +1192,11 @@ main() {
     
     finish_progress
     
+    local end_time=$(date +%s)
+    local total=$((end_time - START_TIME))
+    echo ""
+    printf "🎉 总用时：%d分%02d秒\n" $((total / 60)) $((total % 60))
+    
     print_header "完成！"
     echo "输出目录：$OUTPUT_DIR"
     echo "最终视频：$OUTPUT_DIR/final.mp4"
@@ -970,10 +1209,10 @@ main() {
     [ "$QUALITY_CHECK" = true ] && echo "质量报告:" && echo "  $OUTPUT_DIR/quality_report.txt"
     echo ""
     
-    # 记录结束时间
     if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
         echo "---" >> "$LOG_FILE"
         echo "结束时间：$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
+        echo "总用时：${total}秒" >> "$LOG_FILE"
     fi
 }
 
