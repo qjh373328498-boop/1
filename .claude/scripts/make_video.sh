@@ -229,7 +229,7 @@ check_dependencies() {
 
 show_help() {
     cat << EOF
-🎬 一键视频生成脚本 (v2.3 - 批量任务 + 智能进度)
+🎬 一键视频生成脚本 (v2.2)
 
 用法:
   \$0 --theme "视频主题" --duration 180
@@ -252,10 +252,6 @@ show_help() {
       --width NUM         图片宽度 (默认：1280)
       --height NUM        图片高度 (默认：720)
       --crf NUM           视频质量 0-51 (默认：23, 越小质量越高)
-  --batch FILE          批量任务 JSON 文件路径
-  --max-retries N       最大重试次数 (默认：3)
-  --concurrent N        并发任务数 (默认：1)
-      --error-handling  错误处理：stop/continue/retry (默认：stop)
       --audio-bitrate K   音频比特率 (默认：192k)
       --no-quality-check  跳过质量检查
       --verbose           显示详细日志
@@ -373,19 +369,6 @@ parse_args() {
             --no-quality-check)
                 QUALITY_CHECK=false
                 shift
-                ;;
-            --batch)
-                BATCH_MODE=true
-                BATCH_FILE="$2"
-                shift 2
-                ;;
-            --max-retries)
-                MAX_RETRIES="$2"
-                shift 2
-                ;;
-            --error-handling)
-                ERROR_HANDLING="$2"
-                shift 2
                 ;;
             --verbose)
                 VERBOSE=true
@@ -938,27 +921,7 @@ main() {
         show_help
     fi
     
-    # 批量任务模式
-    if [ "$BATCH_MODE" = true ] && [ -n "$BATCH_FILE" ]; then
-        if [ -z "$OUTPUT_DIR" ]; then
-            OUTPUT_DIR="./video-batch-$(date +%Y%m%d-%H%M%S)"
-        fi
-        mkdir -p "$OUTPUT_DIR"
-        
-        load_batch_tasks
-        
-        if [ ${#TASK_LIST[@]} -eq 0 ]; then
-            print_error "批量任务列表为空"
-            exit 1
-        fi
-        
-        START_TIME=$(date +%s)
-        process_batch_tasks
-        exit $?
-    fi
-    
-    # 单任务模式
-    print_header "视频生成工作流 (v2.3)"
+    print_header "视频生成工作流 (v2.2)"
     echo "主题：${THEME:-N/A}"
     echo "时长：${DURATION}秒"
     echo "输出：$OUTPUT_DIR"
@@ -980,8 +943,6 @@ main() {
     echo "========================================="
     echo ""
     
-    START_TIME=$(date +%s)
-    
     step1_generate_script
     echo ""
     step2_generate_voice
@@ -997,11 +958,6 @@ main() {
     
     finish_progress
     
-    local end_time=$(date +%s)
-    local total_time=$((end_time - START_TIME))
-    echo ""
-    echo "🎉 总用时：$((total_time / 60))分$((total_time % 60))秒"
-    
     print_header "完成！"
     echo "输出目录：$OUTPUT_DIR"
     echo "最终视频：$OUTPUT_DIR/final.mp4"
@@ -1014,130 +970,11 @@ main() {
     [ "$QUALITY_CHECK" = true ] && echo "质量报告:" && echo "  $OUTPUT_DIR/quality_report.txt"
     echo ""
     
+    # 记录结束时间
     if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
         echo "---" >> "$LOG_FILE"
         echo "结束时间：$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
-        echo "总用时：${total_time}秒" >> "$LOG_FILE"
     fi
 }
-
-
 
 main "$@"
-
-# ==================== V2.3 批量任务支持 ====================
-# 在 validate_config() 后添加
-
-load_batch_tasks() {
-    if [ -n "$BATCH_FILE" ] && [ -f "$BATCH_FILE" ]; then
-        echo "📋 加载批量任务：$BATCH_FILE"
-        mapfile -t TASK_LIST < <(python3 -c "
-import json
-with open('$BATCH_FILE', 'r', encoding='utf-8') as f:
-    tasks = json.load(f)
-for task in tasks:
-    print(json.dumps(task, ensure_ascii=False))
-")
-        TASK_TOTAL=${#TASK_LIST[@]}
-        echo "  共加载 $TASK_TOTAL 个任务"
-    fi
-}
-
-process_batch_tasks() {
-    if [ "$BATCH_MODE" = false ] || [ ${#TASK_LIST[@]} -eq 0 ]; then
-        return 0
-    fi
-    
-    print_header "批量任务处理"
-    echo "任务总数：$TASK_TOTAL"
-    echo "错误处理：$ERROR_HANDLING"
-    echo "最大重试：$MAX_RETRIES"
-    echo ""
-    
-    local success_count=0
-    local failed_count=0
-    
-    START_TIME=$(date +%s)
-    
-    for ((i=0; i<TASK_TOTAL; i++)); do
-        TASK_INDEX=$i
-        local task="${TASK_LIST[$i]}"
-        
-        print_header "任务 $((i+1))/$TASK_TOTAL"
-        echo "任务配置：$task"
-        
-        # 解析任务配置
-        local theme=$(echo "$task" | python3 -c "import sys,json; print(json.load(sys.stdin).get('theme',''))")
-        local duration=$(echo "$task" | python3 -c "import sys,json; print(json.load(sys.stdin).get('duration',180))")
-        local voice=$(echo "$task" | python3 -c "import sys,json; print(json.load(sys.stdin).get('voice','zh-CN-YunxiNeural'))")
-        
-        # 生成输出目录名
-        local safe_theme=$(echo "$theme" | tr ' ' '_' | tr -cd 'a-zA-Z0-9_')
-        local task_output_dir="$OUTPUT_DIR/${safe_theme}_$(date +%H%M%S)"
-        
-        echo "主题：$theme"
-        echo "时长：$duration"
-        echo "语音：$voice"
-        echo "输出：$task_output_dir"
-        echo ""
-        
-        # 执行单任务
-        THEME="$theme"
-        DURATION="$duration"
-        VOICE="$voice"
-        OUTPUT_DIR="$task_output_dir"
-        RESUME_FROM=0
-        
-        mkdir -p "$task_output_dir"
-        
-        # 执行主流程（带错误处理）
-        if run_single_task; then
-            success_count=$((success_count + 1))
-            echo "✅ 任务 $((i+1)) 完成"
-        else
-            failed_count=$((failed_count + 1))
-            echo "❌ 任务 $((i+1)) 失败"
-            
-            if [ "$ERROR_HANDLING" = "stop" ]; then
-                print_error "批量任务中止"
-                return 1
-            fi
-        fi
-        
-        echo ""
-        echo "========================================="
-        echo "批量任务进度：$success_count 成功，$failed_count 失败"
-        echo "========================================="
-        echo ""
-    done
-    
-    local end_time=$(date +%s)
-    local total_time=$((end_time - START_TIME))
-    local hours=$((total_time / 3600))
-    local mins=$(((total_time % 3600) / 60))
-    local secs=$((total_time % 60))
-    
-    print_header "批量任务完成"
-    echo "总任务数：$TASK_TOTAL"
-    echo "成功：$success_count"
-    echo "失败：$failed_count"
-    echo "总用时：${hours}小时${mins}分${secs}秒"
-    
-    [ $failed_count -gt 0 ] && return 1
-    return 0
-}
-
-run_single_task() {
-    step1_generate_script
-    echo ""
-    step2_generate_voice
-    echo ""
-    step3_generate_storyboard
-    echo ""
-    step4_generate_images
-    echo ""
-    step5_scale_images
-    echo ""
-    step6_merge_video
-    return 0
-}
