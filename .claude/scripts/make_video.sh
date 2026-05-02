@@ -57,7 +57,11 @@ log() {
     local level="$1"
     local message="$2"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+    
+    # 只有在 LOG_FILE 设置后才写入
+    if [ -n "$LOG_FILE" ]; then
+        echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+    fi
     
     if [ "$VERBOSE" = true ] || [ "$level" = "ERROR" ] || [ "$level" = "WARN" ]; then
         echo "[$level] $message"
@@ -104,8 +108,6 @@ for key, value in config.items():
         print(f'{key_upper}={value}')
 PYTHON
 )"
-        
-        log_info "已加载配置文件：$CONFIG_FILE"
     fi
 }
 
@@ -394,10 +396,21 @@ validate_args() {
     # 命令行参数覆盖配置文件
     # （已在 parse_args 中处理）
     
-    if [ -z "$THEME" ] && [ -z "$SCRIPT_FILE" ]; then
-        print_error "必须提供 --theme 或 --script"
-        echo "使用 -h 查看帮助"
-        exit 1
+    # 断点续传时的特殊处理
+    if [ "$RESUME_FROM" -gt 1 ]; then
+        # 跳过步骤 1 时，检查输出目录是否有脚本文件
+        if [ ! -f "$OUTPUT_DIR/script.md" ]; then
+            print_error "断点续传步骤 $RESUME_FROM，但未找到 script.md"
+            echo "请提供 --script 或确保输出目录包含之前的生成结果"
+            exit 1
+        fi
+        SCRIPT_FILE="$OUTPUT_DIR/script.md"
+    else
+        if [ -z "$THEME" ] && [ -z "$SCRIPT_FILE" ]; then
+            print_error "必须提供 --theme 或 --script"
+            echo "使用 -h 查看帮助"
+            exit 1
+        fi
     fi
     
     if [ -n "$SCRIPT_FILE" ] && [ ! -f "$SCRIPT_FILE" ]; then
@@ -473,8 +486,8 @@ quality_check() {
                 echo "  ✓ 时长：${duration}s" >> "$report_file"
                 echo "  ✓ 大小：${size} bytes" >> "$report_file"
                 
-                # 检查音频是否为空
-                if [ "$(echo "$duration > 0" | bc -l)" = "1" ]; then
+                # 检查音频是否为空（使用 awk 替代 bc）
+                if [ "$(awk "BEGIN {print ($duration > 0)}")" = "1" ]; then
                     echo "  ✓ 音频内容正常" >> "$report_file"
                     return 0
                 else
@@ -517,7 +530,7 @@ quality_check() {
                 echo "  ✓ 尺寸：${dims}" >> "$report_file"
                 echo "  ✓ 大小：${size}" >> "$report_file"
                 
-                if [ "$(echo "$duration > 0" | bc -l)" = "1" ]; then
+                if [ "$(awk "BEGIN {print ($duration > 0)}")" = "1" ]; then
                     echo "  ✓ 视频内容正常" >> "$report_file"
                     return 0
                 else
