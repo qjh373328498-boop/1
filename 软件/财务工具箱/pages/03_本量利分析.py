@@ -1,10 +1,33 @@
-"""
-📈 本量利分析 - 盈亏平衡分析、敏感性分析
-"""
+# 本量利分析 - 性能优化版
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import sys
+import os
+
+# 添加父目录到路径，以便导入 utils 模块
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.formatters import format_currency
+
+# ========== 性能优化：Session State ==========
+if '_loaded' not in st.session_state:
+    st.session_state._loaded = True
+
+
+# ========== 性能优化：图表缓存 ==========
+@st.cache_data
+def create_breakeven_chart(fixed_cost, unit_price, unit_cost, volume):
+    """缓存盈亏平衡图表"""
+    revenue = [unit_price * v for v in range(0, volume*2, volume//10)]
+    total_cost = [fixed_cost + unit_cost * v for v in range(0, volume*2, volume//10)]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=list(range(0, volume*2, volume//10)), y=revenue, name='收入'))
+    fig.add_trace(go.Scatter(x=list(range(0, volume*2, volume//10)), y=total_cost, name='成本'))
+    fig.update_layout(title="盈亏平衡分析", height=450)
+    return fig
+
 
 st.set_page_config(page_title="本量利分析", page_icon="📈", layout="wide")
 
@@ -29,6 +52,12 @@ col1.metric("单位边际贡献", format_currency(contribution_margin))
 col2.metric("边际贡献率", f"{contribution_margin_ratio * 100:.1f}%")
 col3.metric("盈亏平衡点 (销量)", f"{break_even_volume:.0f} 件")
 col4.metric("盈亏平衡点 (金额)", format_currency(break_even_revenue))
+
+
+# ========== 懒加载选项 ==========
+with st.sidebar.expander("📊 显示设置"):
+    show_charts = st.checkbox("显示图表", value=True)
+    show_details = st.checkbox("显示明细", value=False)
 
 st.divider()
 

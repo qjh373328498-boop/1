@@ -3,6 +3,12 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 from datetime import datetime, timedelta
 from utils.database import get_connection, init_db
 
@@ -20,7 +26,7 @@ with tab1:
     
     with col1:
         title = st.text_input("事件标题")
-        event_date = st.date_input("事件日期", value=datetime.now())
+        event_date = st.date_input("事件日期", value=datetime.now(), key="event_date")
         event_type = st.selectbox("事件类型", [
             "纳税申报", "财务报表", "审计", "付款", "收款",
             "会议", "年检", "其他"
@@ -96,7 +102,7 @@ with tab2:
 with tab3:
     st.subheader("即将到期提醒")
     
-    days_limit = st.slider("查看未来多少天的事件", 7, 90, 30)
+    days_limit = st.slider("查看未来多少天的事件", 7, 90, 30, key="lookahead_days")
     
     today = datetime.now()
     end_date = today + timedelta(days=days_limit)

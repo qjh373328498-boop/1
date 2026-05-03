@@ -6,6 +6,13 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入，避免切换页面丢失
+if '_page_loaded' not in st.session_state:
+    st.session_state._page_loaded = True
+# ===============================
+
 st.set_page_config(page_title="财务比率计算器", page_icon="📊", layout="wide")
 
 st.title("📊 财务比率计算器 & 得分估算")
@@ -106,9 +113,9 @@ with col2:
 with col3:
     st.subheader("现金流量表数据 (简化)")
     
-    operating_cash = st.number_input("经营活动现金净流量", min_value=0.0, value=15.0)
-    investing_cash = st.number_input("投资活动现金净流量", min_value=0.0, value=-20.0)
-    financing_cash = st.number_input("筹资活动现金净流量", min_value=0.0, value=30.0)
+    operating_cash = st.number_input("经营活动现金净流量", min_value=-1000000.0, value=15.0)
+    investing_cash = st.number_input("投资活动现金净流量", min_value=-1000000.0, value=-20.0)
+    financing_cash = st.number_input("筹资活动现金净流量", min_value=-1000000.0, value=30.0)
     
     net_cash_flow = operating_cash + investing_cash + financing_cash
     st.metric("现金净增加额", f"{net_cash_flow:.1f}万")

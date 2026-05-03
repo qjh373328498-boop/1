@@ -1,13 +1,39 @@
-"""
-📈 高级业务分析 - 经营决策支持系统
-"""
+# 高级业务分析 - 性能优化版
+
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
-from utils.database import get_connection, get_dashboard_stats
+import plotly.express as px
+import sys
+import os
+from datetime import datetime
+
+# 添加父目录到路径，以便导入 utils 模块
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.database import get_connection
 from utils.formatters import format_currency
+
+# ========== 性能优化：Session State ==========
+if '_loaded' not in st.session_state:
+    st.session_state._loaded = True
+
+
+# ========== 性能优化：图表缓存 ==========
+@st.cache_data
+def create_trend_chart(data, title):
+    """缓存趋势图表"""
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=list(range(len(data))), y=data, mode='lines+markers'))
+    fig.update_layout(title=title, height=400, showlegend=False)
+    return fig
+
+@st.cache_data
+def create_comparison_chart(categories, values):
+    """缓存对比图表"""
+    fig = go.Figure(data=[go.Bar(x=categories, y=values)])
+    fig.update_layout(title="对比分析", height=400, showlegend=False)
+    return fig
+
 
 st.set_page_config(page_title="高级业务分析", page_icon="📈", layout="wide")
 
@@ -36,6 +62,15 @@ end_date = st.sidebar.date_input("结束日期", value=max_date)
 if start_date > end_date:
     st.error("开始日期不能大于结束日期")
     st.stop()
+
+
+# ========== 懒加载优化 ==========
+# 使用选项卡式导航代替同时渲染所有内容
+st.sidebar.markdown("---")
+st.sidebar.subheader("显示选项")
+show_trend = st.sidebar.checkbox("显示趋势", value=True)
+show_comparison = st.sidebar.checkbox("显示对比", value=False)
+show_detail = st.sidebar.checkbox("显示明细", value=False)
 
 # 核心指标卡片
 st.subheader("关键经营指标")

@@ -7,12 +7,100 @@ import os
 import json
 from datetime import datetime
 
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入，切换页面不丢失
+if 'page_data' not in st.session_state:
+    st.session_state.page_data = {}
+
+def get_input(key, default):
+    """从 session_state 获取输入"""
+    if key not in st.session_state:
+        st.session_state[key] = default
+    return st.session_state[key]
+
+# ========== 原始代码 ==========
+
 st.set_page_config(page_title="智能决策建议", page_icon="🤖", layout="wide")
 
 st.title("🤖 智能决策建议")
 st.markdown("**基于比赛规则和历史数据的智能决策辅助系统**")
 
 st.divider()
+
+def get_weakness_suggestions(dim, rate):
+    if dim == "盈利能力":
+        if rate < 50:
+            return "净利润率可能<5%，产品定价过低或成本过高"
+        elif rate < 70:
+            return "净利润率可能 5-7%，有提升空间"
+        else:
+            return "表现良好，可继续保持"
+    elif dim == "营运能力":
+        if rate < 50:
+            return "资产周转率可能<0.6，存在资产闲置或存货积压"
+        elif rate < 70:
+            return "资产周转率可能 0.6-0.8，运营效率一般"
+        else:
+            return "表现良好，可继续保持"
+    elif dim == "偿债能力":
+        if rate < 50:
+            return "流动比例可能<1.0 或 负债率>70%，财务风险高"
+        elif rate < 70:
+            return "流动比率或负债率接近临界值"
+        else:
+            return "表现良好，可继续保持"
+    elif dim == "发展能力":
+        if rate < 50:
+            return "销售增长可能<5%，市场拓展不足"
+        elif rate < 70:
+            return "增长速度一般，可加大市场投入"
+        else:
+            return "表现良好，可继续保持"
+    else:  # 预算能力
+        if rate < 50:
+            return "预算偏差可能>20%，预算编制不准确"
+        elif rate < 70:
+            return "预算偏差 10-20%，需提升预算准确性"
+        else:
+            return "表现良好，可继续保持"
+
+def get_improvement_suggestions(dim):
+    if dim == "盈利能力":
+        return [
+            "使用【报价策略计算器】优化产品定价",
+            "分析成本结构，找出降本空间",
+            "考虑调整产品结构，增加高毛利产品占比",
+            "控制期间费用（广告/管理/财务费用）"
+        ]
+    elif dim == "营运能力":
+        return [
+            "使用【产能规划工具】提升产能利用率",
+            "优化库存管理，减少存货积压",
+            "加快应收账款回收",
+            "处置闲置资产，提高资产周转率"
+        ]
+    elif dim == "偿债能力":
+        return [
+            "使用【贷款决策助手】优化贷款结构",
+            "控制负债率在 50-60%",
+            "保持流动比率 1.2-1.5",
+            "合理安排长短期贷款比例"
+        ]
+    elif dim == "发展能力":
+        return [
+            "加大市场开拓力度",
+            "适时扩大产能",
+            "开发新产品/新市场",
+            "保持适度增速，避免大起大落"
+        ]
+    else:  # 预算能力
+        return [
+            "使用【预算编制助手】编制详细预算",
+            "建立预算执行监控机制",
+            "季度中检查预算偏差并及时调整",
+            "提高销售和成本预测准确性"
+        ]
 
 # 数据目录
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
@@ -572,80 +660,6 @@ else:  # 赛后复盘分析
             st.write(summary['action_items'])
         else:
             st.write("暂无记录")
-
-def get_weakness_suggestions(dim, rate):
-    if dim == "盈利能力":
-        if rate < 50:
-            return "净利润率可能<5%，产品定价过低或成本过高"
-        elif rate < 70:
-            return "净利润率可能 5-7%，有提升空间"
-        else:
-            return "表现良好，可继续保持"
-    elif dim == "营运能力":
-        if rate < 50:
-            return "资产周转率可能<0.6，存在资产闲置或存货积压"
-        elif rate < 70:
-            return "资产周转率可能 0.6-0.8，运营效率一般"
-        else:
-            return "表现良好，可继续保持"
-    elif dim == "偿债能力":
-        if rate < 50:
-            return "流动比例可能<1.0 或 负债率>70%，财务风险高"
-        elif rate < 70:
-            return "流动比率或负债率接近临界值"
-        else:
-            return "表现良好，可继续保持"
-    elif dim == "发展能力":
-        if rate < 50:
-            return "销售增长可能<5%，市场拓展不足"
-        elif rate < 70:
-            return "增长速度一般，可加大市场投入"
-        else:
-            return "表现良好，可继续保持"
-    else:  # 预算能力
-        if rate < 50:
-            return "预算偏差可能>20%，预算编制不准确"
-        elif rate < 70:
-            return "预算偏差 10-20%，需提升预算准确性"
-        else:
-            return "表现良好，可继续保持"
-
-def get_improvement_suggestions(dim):
-    if dim == "盈利能力":
-        return [
-            "使用【报价策略计算器】优化产品定价",
-            "分析成本结构，找出降本空间",
-            "考虑调整产品结构，增加高毛利产品占比",
-            "控制期间费用（广告/管理/财务费用）"
-        ]
-    elif dim == "营运能力":
-        return [
-            "使用【产能规划工具】提升产能利用率",
-            "优化库存管理，减少存货积压",
-            "加快应收账款回收",
-            "处置闲置资产，提高资产周转率"
-        ]
-    elif dim == "偿债能力":
-        return [
-            "使用【贷款决策助手】优化贷款结构",
-            "控制负债率在 50-60%",
-            "保持流动比率 1.2-1.5",
-            "合理安排长短期贷款比例"
-        ]
-    elif dim == "发展能力":
-        return [
-            "加大市场开拓力度",
-            "适时扩大产能",
-            "开发新产品/新市场",
-            "保持适度增速，避免大起大落"
-        ]
-    else:  # 预算能力
-        return [
-            "使用【预算编制助手】编制详细预算",
-            "建立预算执行监控机制",
-            "季度中检查预算偏差并及时调整",
-            "提高销售和成本预测准确性"
-        ]
 
 # 页脚
 st.divider()

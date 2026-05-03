@@ -7,12 +7,38 @@ import json
 from datetime import datetime
 import os
 
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入，切换页面不丢失
+if 'page_data' not in st.session_state:
+    st.session_state.page_data = {}
+
+def get_input(key, default):
+    """从 session_state 获取输入"""
+    if key not in st.session_state:
+        st.session_state[key] = default
+    return st.session_state[key]
+
+# ========== 原始代码 ==========
+
 st.set_page_config(page_title="比赛复盘记录表", page_icon="📝", layout="wide")
 
 st.title("📝 比赛复盘记录表")
 st.markdown("**记录每轮决策数据，分析得失，快速提升比赛水平**")
 
 st.divider()
+
+def get_achievement_level(score):
+    if score >= 95:
+        return "🥇 特等奖"
+    elif score >= 85:
+        return "🥇 一等奖"
+    elif score >= 70:
+        return "🥈 二等奖"
+    elif score >= 60:
+        return "🥉 三等奖"
+    else:
+        return "🏅 参与奖"
 
 # 数据文件路径
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
@@ -225,18 +251,6 @@ if mode == "📝 新建复盘记录":
         percentile = (1 - (final_rank - 1) / total_teams) * 100 if total_teams > 0 else 0
         st.metric("排名百分位", f"{percentile:.1f}%", 
                   delta=f"{final_rank}/{total_teams}名")
-    
-    def get_achievement_level(score):
-        if score >= 95:
-            return "🥇 特等奖"
-        elif score >= 85:
-            return "🥇 一等奖"
-        elif score >= 70:
-            return "🥈 二等奖"
-        elif score >= 60:
-            return "🥉 三等奖"
-        else:
-            return "🏅 参与奖"
     
     st.divider()
     

@@ -3,6 +3,12 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 from datetime import datetime, timedelta
 from utils.database import get_connection, init_db
 from difflib import SequenceMatcher

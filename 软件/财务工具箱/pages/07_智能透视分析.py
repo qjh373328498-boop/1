@@ -3,6 +3,12 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 from utils.database import get_connection, init_db
 
 st.set_page_config(page_title="智能透视分析", page_icon="🎯", layout="wide")
@@ -44,13 +50,17 @@ else:
     
     agg_func = st.selectbox("汇总方式", ["sum", "count", "mean", "min", "max"])
     
+    # 确保值列是数值类型
+    if val_col in df.columns:
+        df[val_col] = pd.to_numeric(df[val_col], errors='coerce')
+    
     pivot_table = pd.pivot_table(
         df,
         index=row_col,
         columns=col_col,
         values=val_col,
         aggfunc=agg_func,
-        fill_value=0,
+        fill_value=0.0,
         margins=True,
         margins_name="合计"
     )

@@ -3,6 +3,11 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化：Session State ==========
+if '_loaded' not in st.session_state:
+    st.session_state._loaded = True
+
 import plotly.graph_objects as go
 from utils.database import get_connection, init_db
 from utils.formatters import format_currency

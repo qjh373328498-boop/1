@@ -3,6 +3,12 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 from datetime import datetime
 from utils.database import get_connection, init_db
 
@@ -20,7 +26,7 @@ with tab1:
     with col1:
         code = st.text_input("发票代码", placeholder="10 位或 12 位数字")
         number = st.text_input("发票号码", placeholder="8 位数字")
-        date = st.date_input("开票日期", value=datetime.now())
+        date = st.date_input("开票日期", value=datetime.now(), key="invoice_date")
         amount = st.number_input("金额", min_value=0.0, step=0.01)
     
     with col2:

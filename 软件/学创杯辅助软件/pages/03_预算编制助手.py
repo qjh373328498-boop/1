@@ -5,6 +5,20 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入，切换页面不丢失
+if 'page_data' not in st.session_state:
+    st.session_state.page_data = {}
+
+def get_input(key, default):
+    """从 session_state 获取输入"""
+    if key not in st.session_state:
+        st.session_state[key] = default
+    return st.session_state[key]
+
+# ========== 原始代码 ==========
+
 st.set_page_config(page_title="预算编制助手", page_icon="📋", layout="wide")
 
 st.title("📋 预算编制助手")

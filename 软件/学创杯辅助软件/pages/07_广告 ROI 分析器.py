@@ -5,10 +5,55 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入，切换页面不丢失
+if 'page_data' not in st.session_state:
+    st.session_state.page_data = {}
+
+def get_input(key, default):
+    """从 session_state 获取输入"""
+    if key not in st.session_state:
+        st.session_state[key] = default
+    return st.session_state[key]
+
+# ========== 原始代码 ==========
+
 st.set_page_config(page_title="广告 ROI 分析器", page_icon="📈", layout="wide")
 
 st.title("📈 广告 ROI 分析器")
 st.markdown("**优化广告投放策略，提升投入产出比， maximize 中标率**")
+
+
+# ========== 性能优化：缓存图表和计算 ==========
+@st.cache_data
+def calculate_roi_scenarios(params):
+    """缓存 ROI 方案计算"""
+    results = []
+    for ad_multiplier in [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]:
+        ad_spend = params['avg_competitor_ad'] * ad_multiplier
+        estimated_share = (ad_spend / (ad_spend + (params['num_competitors'] - 1) * params['avg_competitor_ad'])) * 0.8 + (1/params['num_competitors']) * 0.2
+        if ad_multiplier > 1.5:
+            estimated_share *= 0.9
+        elif ad_multiplier > 1.25:
+            estimated_share *= 0.95
+        
+        estimated_orders = min(int(params['total_market_size'] * estimated_share), params['capacity'])
+        revenue = estimated_orders * params['product_price']
+        gross_profit = estimated_orders * (params['product_price'] - params['product_cost'])
+        net_profit = gross_profit - ad_spend
+        roi = (net_profit / ad_spend * 100) if ad_spend > 0 else 0
+        
+        results.append({
+            "投入档次": ad_multiplier,
+            "广告投入": ad_spend,
+            "预估份额": estimated_share,
+            "预计订单": estimated_orders,
+            "毛利润": gross_profit,
+            "净利润": net_profit,
+            "ROI": roi
+        })
+    return results
 
 st.divider()
 
@@ -27,8 +72,8 @@ with st.sidebar:
     capacity = st.number_input("本季度产能 (件)", min_value=100, max_value=50000, value=8000, step=500)
     
     st.subheader("历史数据")
-    last_ad_spend = st.number_input("上季度广告投入 (万元)", min_value=0, max_value=500, value=40, step=10)
-    last_market_share = st.number_input("上季度市场份额 (%)", min_value=0, max_value=100, value=12.5, step=2.5)
+    last_ad_spend = st.number_input("上季度广告投入 (万元)", min_value=0.0, max_value=500.0, value=40.0, step=10.0)
+    last_market_share = st.number_input("上季度市场份额 (%)", min_value=0.0, max_value=100.0, value=12.5, step=2.5)
 
 # 计算单位毛利
 unit_margin = product_price - product_cost
@@ -37,6 +82,41 @@ margin_rate = unit_margin / product_price if product_price > 0 else 0
 st.divider()
 
 st.subheader("💰 广告投放方案对比")
+
+# 生成不同广告投入方案
+ad_scenarios = []
+
+def get_tier(multiplier):
+    if multiplier < 0.75:
+        return "🐢 保守"
+    elif multiplier < 1.0:
+        return "🚶 稳健"
+    elif multiplier < 1.25:
+        return "🏃 积极"
+    elif multiplier < 1.5:
+        return "🚀 激进"
+    else:
+        return "🔥 疯狂"
+
+def get_recommendation(roi, multiplier):
+    if roi > 200:
+        return "⭐⭐⭐⭐⭐"
+    elif roi > 150:
+        return "⭐⭐⭐⭐"
+    elif roi > 100:
+        return "⭐⭐⭐"
+    elif roi > 50:
+        return "⭐⭐"
+    else:
+        return "⭐"
+
+def get_comprehensive_recommendation(best, high_roi, margin):
+    if margin > 0.4:
+        return f"当前毛利率{margin:.0%}较高，建议采用**{best['投入档次']}**策略，投入**{best['广告投入 (万元)']:.1f}万元**，最大化市场份额和利润。"
+    elif margin > 0.25:
+        return f"当前毛利率{margin:.0%}中等，建议采用**{high_roi['投入档次']}**策略，投入**{high_roi['广告投入 (万元)']:.1f}万元**，平衡 ROI 和利润。"
+    else:
+        return f"当前毛利率{margin:.0%}较低，建议**控制广告投入**，优先采用**{high_roi['投入档次']}**策略，投入**{high_roi['广告投入 (万元)']:.1f}万元**，避免亏损。"
 
 # 生成不同广告投入方案
 ad_scenarios = []
@@ -70,30 +150,6 @@ for ad_multiplier in [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]:
         "ROI": f"{roi:.0f}%",
         "推荐指数": get_recommendation(roi, ad_multiplier)
     })
-
-def get_tier(multiplier):
-    if multiplier < 0.75:
-        return "🐢 保守"
-    elif multiplier < 1.0:
-        return "🚶 稳健"
-    elif multiplier < 1.25:
-        return "🏃 积极"
-    elif multiplier < 1.5:
-        return "🚀 激进"
-    else:
-        return "🔥 疯狂"
-
-def get_recommendation(roi, multiplier):
-    if roi > 200:
-        return "⭐⭐⭐⭐⭐"
-    elif roi > 150:
-        return "⭐⭐⭐⭐"
-    elif roi > 100:
-        return "⭐⭐⭐"
-    elif roi > 50:
-        return "⭐⭐"
-    else:
-        return "⭐"
 
 df_scenarios = pd.DataFrame(ad_scenarios)
 st.dataframe(
@@ -206,14 +262,6 @@ st.info(f"""
 **🏆 综合建议**：
 {get_comprehensive_recommendation(best_scenario, high_roi_scenario, margin_rate)}
 """)
-
-def get_comprehensive_recommendation(best, high_roi, margin):
-    if margin > 0.4:
-        return f"当前毛利率{margin:.0%}较高，建议采用**{best['投入档次']}**策略，投入**{best['广告投入 (万元)']:.1f}万元**，最大化市场份额和利润。"
-    elif margin > 0.25:
-        return f"当前毛利率{margin:.0%}中等，建议采用**{high_roi['投入档次']}**策略，投入**{high_roi['广告投入 (万元)']:.1f}万元**，平衡 ROI 和利润。"
-    else:
-        return f"当前毛利率{margin:.0%}较低，建议**控制广告投入**，优先采用**{high_roi['投入档次']}**策略，投入**{high_roi['广告投入 (万元)']:.1f}万元**，避免亏损。"
 
 st.divider()
 

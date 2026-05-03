@@ -5,10 +5,49 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入，切换页面不丢失
+if 'page_data' not in st.session_state:
+    st.session_state.page_data = {}
+
+def get_input(key, default):
+    """从 session_state 获取输入"""
+    if key not in st.session_state:
+        st.session_state[key] = default
+    return st.session_state[key]
+
+# ========== 原始代码 ==========
+
 st.set_page_config(page_title="产能规划工具", page_icon="🏭", layout="wide")
 
 st.title("🏭 产能规划工具")
 st.markdown("**计算产能利用率，优化投资决策，避免产能闲置或不足**")
+
+
+# ========== 性能优化：缓存图表数据 ==========
+@st.cache_data
+def create_utilization_chart(data):
+    """缓存产能利用率图表"""
+    import plotly.graph_objects as go
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name="订单需求", x=["Q1", "Q2", "Q3", "Q4"], y=data))
+    fig.update_layout(title="产能利用率分析", barmode="group", height=400)
+    return fig
+
+@st.cache_data
+def get_capacity_status(rate):
+    """缓存产能状态判断"""
+    if rate < 70:
+        return "⚠️ 产能闲置"
+    elif rate < 85:
+        return "👌 偏低"
+    elif rate <= 95:
+        return "✅ 最优"
+    elif rate <= 100:
+        return "👍 充分"
+    else:
+        return "🔥 超负荷"
 
 st.divider()
 
@@ -35,6 +74,18 @@ with st.sidebar:
 total_capacity = product_lines * capacity_per_line
 quarterly_capacities = [q1_demand, q2_demand, q3_demand, q4_demand]
 utilization_rates = [min(d / total_capacity * 100, 150) for d in quarterly_capacities]
+
+def get_status(rate):
+    if rate < 70:
+        return "⚠️ 产能闲置"
+    elif rate < 85:
+        return "👌 偏低"
+    elif rate <= 95:
+        return "✅ 最优"
+    elif rate <= 100:
+        return "👍 充分"
+    else:
+        return "🔥 超负荷"
 
 st.divider()
 
@@ -70,18 +121,6 @@ with col3:
         delta=f"相当于{unused_capacity/capacity_per_line:.1f}条线",
         delta_color="inverse" if unused_capacity > total_capacity * 0.2 else "normal"
     )
-
-def get_status(rate):
-    if rate < 70:
-        return "⚠️ 产能闲置"
-    elif rate < 85:
-        return "👌 偏低"
-    elif rate <= 95:
-        return "✅ 最优"
-    elif rate <= 100:
-        return "👍 充分"
-    else:
-        return "🔥 超负荷"
 
 # 可视化产能利用率
 fig = go.Figure()

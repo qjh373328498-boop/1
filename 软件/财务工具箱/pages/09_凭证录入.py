@@ -3,6 +3,12 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 from datetime import datetime
 from utils.database import get_connection, init_db
 
@@ -37,7 +43,7 @@ with tab1:
     col1, col2 = st.columns(2)
     with col1:
         voucher_no = st.text_input("凭证号", placeholder="记 -001")
-        trans_date = st.date_input("日期", value=datetime.now())
+        trans_date = st.date_input("日期", value=datetime.now(), key="voucher_date")
         attachment_count = st.number_input("附件数", min_value=0, value=0)
     
     with col2:

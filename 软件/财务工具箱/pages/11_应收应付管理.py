@@ -3,6 +3,12 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 from datetime import datetime, timedelta
 from utils.database import get_connection, init_db
 from utils.formatters import format_currency
@@ -19,14 +25,14 @@ with tab1:
     
     col1, col2 = st.columns(2)
     with col1:
-        ar_customer = st.text_input("客户名称")
-        ar_amount = st.number_input("应收金额", min_value=0.01)
-        ar_date = st.date_input("应收日期", value=datetime.now())
+        ar_customer = st.text_input("客户名称", key="ar_customer")
+        ar_amount = st.number_input("应收金额", min_value=0.01, key="ar_amount")
+        ar_date = st.date_input("应收日期", value=datetime.now(), key="ar_date")
     with col2:
-        ar_due_date = st.date_input("到期日期", value=datetime.now() + timedelta(days=30))
-        ar_summary = st.text_input("摘要")
+        ar_due_date = st.date_input("到期日期", value=datetime.now() + timedelta(days=30), key="ar_due_date")
+        ar_summary = st.text_input("摘要", key="ar_summary")
     
-    if st.button("添加应收账款", type="primary"):
+    if st.button("添加应收账款", type="primary", key="btn_add_ar"):
         if ar_customer and ar_amount:
             conn = get_connection()
             conn.execute(
@@ -55,14 +61,14 @@ with tab2:
     
     col1, col2 = st.columns(2)
     with col1:
-        ap_supplier = st.text_input("供应商名称")
-        ap_amount = st.number_input("应付金额", min_value=0.01)
-        ap_date = st.date_input("应付日期", value=datetime.now())
+        ap_supplier = st.text_input("供应商名称", key="ap_supplier")
+        ap_amount = st.number_input("应付金额", min_value=0.01, key="ap_amount")
+        ap_date = st.date_input("应付日期", value=datetime.now(), key="ap_date")
     with col2:
-        ap_due_date = st.date_input("到期日期", value=datetime.now() + timedelta(days=30))
-        ap_summary = st.text_input("摘要")
+        ap_due_date = st.date_input("到期日期", value=datetime.now() + timedelta(days=30), key="ap_due_date")
+        ap_summary = st.text_input("摘要", key="ap_summary")
     
-    if st.button("添加应付账款", type="primary"):
+    if st.button("添加应付账款", type="primary", key="btn_add_ap"):
         if ap_supplier and ap_amount:
             conn = get_connection()
             conn.execute(

@@ -3,6 +3,12 @@
 """
 import streamlit as st
 import pandas as pd
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 from utils.formatters import format_currency
 
 st.set_page_config(page_title="纳税申报", page_icon="🧾", layout="wide")

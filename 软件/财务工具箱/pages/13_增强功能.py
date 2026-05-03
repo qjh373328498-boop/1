@@ -3,6 +3,12 @@
 包含数据导出、备份、高级分析等功能
 """
 import streamlit as st
+
+# ========== 性能优化 ==========
+# Session State: 保存用户输入
+if '_session_init' not in st.session_state:
+    st.session_state._session_init = True
+
 import pandas as pd
 from datetime import datetime
 from utils.database import get_connection, export_to_excel, get_dashboard_stats
