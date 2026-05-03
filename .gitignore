@@ -8,3 +8,26 @@ package.json
 *.wav
 *.mov
 video-output/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 财务工具箱数据
+软件开发/财务工具箱/data/*.db
+软件开发/财务工具箱/data/*.sqlite
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System
+.DS_Store
+Thumbs.db
