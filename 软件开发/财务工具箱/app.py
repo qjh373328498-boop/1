@@ -43,7 +43,7 @@ def login():
                 st.error("用户名或密码错误")
     
     with col2:
-        st.info("💡 默认管理员账户\n\n用户名：admin\n\n密码：admin123")
+        st.info("💡 默认管理员账户\n\n用户名：admin\n\n密码：703102")
 
 
 def logout():
